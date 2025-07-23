@@ -97,17 +97,31 @@ This software is considered to be in an experimental, "alpha" stage.
 
 PlackX::Framework consists of the required modules:
 
-PlackX::Framework
-PlackX::Framework::Handler
-PlackX::Framework::Request
-PlackX::Framework::Response
-PlackX::Framework::Router
-PlackX::Framework::Router::Engine
+=over 4
+
+=item PlackX::Framework
+
+=item PlackX::Framework::Handler
+
+=item PlackX::Framework::Request
+
+=item PlackX::Framework::Response
+
+=item PlackX::Framework::Router
+
+=item PlackX::Framework::Router::Engine
+
+=back
 
 And the following optional modules:
 
-PlackX::Framework::Template
-PlackX::Framework::URIx
+=over 4
+
+=item PlackX::Framework::Template
+
+=item PlackX::Framework::URIx
+
+=back
 
 The statement "use PlackX::Framework" will automatically find and load all of
 the required modules. Then it will look for subclasses of the modules listed 
