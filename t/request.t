@@ -1,5 +1,5 @@
 #!perl
-use v5.40;
+use v5.36;
 use Test::More;
 
 package MyExample::Request {

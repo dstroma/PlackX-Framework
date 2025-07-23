@@ -1,5 +1,5 @@
 #!perl
-use v5.40;
+use v5.36;
 
 package My::Test::Controller {
   use Test::More;
