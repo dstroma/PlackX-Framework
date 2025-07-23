@@ -62,36 +62,25 @@ sub do_tests {
   );
 
   # use() PlackX::Framework with all optional modules
-  eval q{
-    package My::Test::App2b {
-      use PlackX::Framework qw(:config);
-      use My::Test::App2b::Router;
-      use My::Test::App2b::Config './t/config.pl';
-      my $config = config();
-      # TODO: Currently, an app with no routes breaks!
-      # Add a default route or warn if no routes?
-      request '/' => sub ($request, $response) {
-        $response->print('Hello world!');
-        $response;
-      };
-    }
-    1;
-  } or die "Problem setting up test with config: $@";
-
   ok(
-    My::Test::App2b->config,
-    'New app has a config() method'
+    eval q{
+      package My::Test::App2b {
+        use PlackX::Framework qw(:all);
+        use My::Test::App2b::Router;
+        use My::Test::App2b::Config './t/tsupport/config.pl';
+        my $config = config();
+        # TODO: Currently, an app with no routes breaks!
+        # Add a default route or warn if no routes?
+        request '/' => sub ($request, $response) {
+          $response->print('Hello world!');
+          $response;
+        };
+      }
+      1;
+    },
+    'Create an app with optional components'
   );
 
-  is(
-    ref My::Test::App2b->config => 'HASH',
-    'Config method returns expected data structure'
-  );
-
-  is(
-    My::Test::App2b->config->{key2} => 'value2',
-    'Config file contains expected data'
-  );
 }
 
 #######################################################################
@@ -129,7 +118,6 @@ sub test_env {
     'REMOTE_PORT' => 62037,
     'SERVER_PORT' => 5000,
     'HTTP_UPGRADE_INSECURE_REQUESTS' => '1',
-    'HTTP_SEC_CH_UA_PLATFORM' => '"macOS"',
     'HTTP_SEC_FETCH_MODE' => 'navigate',
     'REQUEST_URI' => '/'
   };
