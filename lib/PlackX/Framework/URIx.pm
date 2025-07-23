@@ -32,14 +32,18 @@ package PlackX::Framework::URIx {
   }
 
   sub query_set ($self, @new) {
-    foreach my ($key, $val) (@new) {
+    while (@new) {
+      my $key = shift @new;
+      my $val = shift @new;
       $self->param($key => $val);
     }
     return $self;
   }
 
   sub query_add ($self, @new) {
-    foreach my ($key, $val) (@new) {
+    while (@new) {
+      my $key = shift @new;
+      my $val = shift @new;
       $self->add_param($key => $val);
     }
     return $self;

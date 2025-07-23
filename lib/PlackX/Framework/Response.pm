@@ -65,8 +65,9 @@ package PlackX::Framework::Response {
     $self->header('Pragma' => $val, 'Cache-control' => $val);
   }
 
-  sub flash ($self, $value //= '') {
+  sub flash ($self, $value = undef) {
     # Values are automatically encoded by Cookie::Baker
+    $value //= '';
     my $max_age = $value ? 300 : -1; # If value is false we delete the cookie
     $self->cookies->{flash_cookie_name($self)} = { value=>$value, path=>'/', 'max-age'=>$max_age, samesite=>'strict' };
     return $self;
