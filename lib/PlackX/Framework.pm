@@ -197,6 +197,8 @@ The PlackX::Framework::Request and PlackX::Framework::Response modules are
 subclasses of Plack::Request and Plack::Response sprinkled with additional
 features, described below.
 
+=over 4
+
 =item stash()
 
 Both feature a shared "stash" which is a hashref in which you can store any
@@ -218,6 +220,8 @@ On the next request:
 
 During the response phase, the flash cookie is cleared, unless you set another
 one.
+
+=back
 
 =head3 PlackX::Framework::Router
 
@@ -384,14 +388,17 @@ to [ProjectName]::Handler->to_app.)
 
 =head1 DEPENDENCIES
 
+=head2 Required
+
 Plack
 Router::Boom
 
 
-=head2 Optional Dependencies
+=head2 Optional
 
 URI::Fast
 Template
+Config::Any
 
 
 =head1 SEE ALSO
@@ -400,6 +407,7 @@ PSGI
 Plack
 Plack::Request
 Plack::Response
+Router::Boom
 
 
 =head1 AUTHOR
@@ -409,7 +417,7 @@ Dondi Michael Stroma, E<lt>dstroma@gmail.com<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2016-2023 by Dondi Michael Stroma
+Copyright (C) 2016-2025 by Dondi Michael Stroma
 
 
 =cut
