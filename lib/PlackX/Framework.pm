@@ -11,7 +11,7 @@ package PlackX::Framework 0.24 {
   sub import (@options) {
     my %required   = map { $_ => 1 } required_modules(); # not memoized to save ram
     my $all_wanted = any { $_ =~ m/^[:+]all$/ } @options;
-    my $mod_wanted = $all_wanted ? sub { 1 } : sub { any { $_ =~ m/^[:+]{0,2}$_[0]$/i } @options };
+    my $mod_wanted = $all_wanted ? sub {1} : sub { any { $_ =~ m/^[:+]{0,2}$_[0]$/i } @options };
     my $caller     = caller(0);
     export_app_sub($caller);
 
@@ -204,6 +204,7 @@ a stash, and if set up, templating.
 
 
 =head3 PlackX::Framework::Request
+
 =head3 PlackX::Framework::Response
 
 The PlackX::Framework::Request and PlackX::Framework::Response modules are
@@ -304,25 +305,37 @@ The end result is a simple, lightweight framework that is higher level
 than using the raw Plack building blocks, although it does not have as many
 features as other frameworks. Here are some advantages:
 
- - A basic PlackX::Framework "Hello World" application loads 75% faster
-   than a Dancer2 application and 70% faster than a Mojolicious::Lite app.
-   (The author has not benchmarked request/response times.)
+=over 4
 
- - A basic PlackX::Framework "Hello World" application uses approximately
-   one-third the memory of either Dancer2 or Mojolicious::Lite (~10MB compared
-   to ~30MB for each of the other two).
+=item Load Time
 
- - PlackX::Framework has few non-core dependencies (it has more than 
-   Mojolicious, which has zero, but fewer than Dancer2, which has a lot.)
+A basic PlackX::Framework "Hello World" application loads 75% faster
+than a Dancer2 application and 70% faster than a Mojolicious::Lite app.
+(The author has not benchmarked request/response times.)
 
- - PlackX::Framework has some magic, but not too much. It can be easily
-   overriden with subclassing. You can use the bundled router engine
-   or supply your own. You can use Template Toolkit automatically or use
-   a different template engine.
+=item Memory
+
+A basic PlackX::Framework "Hello World" application uses approximately
+one-third the memory of either Dancer2 or Mojolicious::Lite (~10MB compared
+to ~30MB for each of the other two).
+
+=item Dependencies
+
+PlackX::Framework has few non-core dependencies (it has more than
+Mojolicious, which has zero, but fewer than Dancer2, which has a lot.)
+
+=item Magic
+
+PlackX::Framework has some magic, but not too much. It can be easily
+overriden with subclassing. You can use the bundled router engine
+or supply your own. You can use Template Toolkit automatically or use
+a different template engine.
+
+=back
 
 The author makes no claims that this framework is better than any other
 framework except for the few trivial metrics described above. It has been
-published to CPAN in the spirit of TIMTOWDI.
+published in the spirit of TIMTOWDI.
 
 
 =head2 Object Orientation and Magic
@@ -403,24 +416,42 @@ to [ProjectName]::Handler->to_app.)
 
 =head2 Required
 
-Plack
-Router::Boom
+=over 4
+
+=item Plack
+
+=item Router::Boom
+
+=back
 
 
 =head2 Optional
 
-URI::Fast
-Template
-Config::Any
+=over 4
 
+=item Config::Any
+
+=item Template
+
+=item URI::Fast
+
+=back
 
 =head1 SEE ALSO
 
-PSGI
-Plack
-Plack::Request
-Plack::Response
-Router::Boom
+=over 4
+
+=item PSGI
+
+=item Plack
+
+=item Plack::Request
+
+=item Plack::Response
+
+=item Router::Boom
+
+=back
 
 
 =head1 AUTHOR

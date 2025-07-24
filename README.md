@@ -121,7 +121,8 @@ like to customize its behavior. It will prepare request and response objects,
 a stash, and if set up, templating.
 
 ### PlackX::Framework::Request
-=head3 PlackX::Framework::Response
+
+### PlackX::Framework::Response
 
 The PlackX::Framework::Request and PlackX::Framework::Response modules are
 subclasses of Plack::Request and Plack::Response sprinkled with additional
@@ -212,25 +213,33 @@ The end result is a simple, lightweight framework that is higher level
 than using the raw Plack building blocks, although it does not have as many
 features as other frameworks. Here are some advantages:
 
-    - A basic PlackX::Framework "Hello World" application loads 75% faster
-      than a Dancer2 application and 70% faster than a Mojolicious::Lite app.
-      (The author has not benchmarked request/response times.)
+- Load Time
 
-    - A basic PlackX::Framework "Hello World" application uses approximately
-      one-third the memory of either Dancer2 or Mojolicious::Lite (~10MB compared
-      to ~30MB for each of the other two).
+    A basic PlackX::Framework "Hello World" application loads 75% faster
+    than a Dancer2 application and 70% faster than a Mojolicious::Lite app.
+    (The author has not benchmarked request/response times.)
 
-    - PlackX::Framework has few non-core dependencies (it has more than 
-      Mojolicious, which has zero, but fewer than Dancer2, which has a lot.)
+- Memory
 
-    - PlackX::Framework has some magic, but not too much. It can be easily
-      overriden with subclassing. You can use the bundled router engine
-      or supply your own. You can use Template Toolkit automatically or use
-      a different template engine.
+    A basic PlackX::Framework "Hello World" application uses approximately
+    one-third the memory of either Dancer2 or Mojolicious::Lite (~10MB compared
+    to ~30MB for each of the other two).
+
+- Dependencies
+
+    PlackX::Framework has few non-core dependencies (it has more than
+    Mojolicious, which has zero, but fewer than Dancer2, which has a lot.)
+
+- Magic
+
+    PlackX::Framework has some magic, but not too much. It can be easily
+    overriden with subclassing. You can use the bundled router engine
+    or supply your own. You can use Template Toolkit automatically or use
+    a different template engine.
 
 The author makes no claims that this framework is better than any other
 framework except for the few trivial metrics described above. It has been
-published to CPAN in the spirit of TIMTOWDI.
+published in the spirit of TIMTOWDI.
 
 ## Object Orientation and Magic
 
@@ -304,22 +313,22 @@ to \[ProjectName\]::Handler->to\_app.)
 
 ## Required
 
-Plack
-Router::Boom
+- Plack
+- Router::Boom
 
 ## Optional
 
-URI::Fast
-Template
-Config::Any
+- Config::Any
+- Template
+- URI::Fast
 
 # SEE ALSO
 
-PSGI
-Plack
-Plack::Request
-Plack::Response
-Router::Boom
+- PSGI
+- Plack
+- Plack::Request
+- Plack::Response
+- Router::Boom
 
 # AUTHOR
 
