@@ -418,6 +418,8 @@ to [ProjectName]::Handler->to_app.)
 
 =over 4
 
+=item perl 5.36 or greater
+
 =item Plack
 
 =item Router::Boom
