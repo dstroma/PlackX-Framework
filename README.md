@@ -313,6 +313,7 @@ to \[ProjectName\]::Handler->to\_app.)
 
 ## Required
 
+- perl 5.36 or greater
 - Plack
 - Router::Boom
 
