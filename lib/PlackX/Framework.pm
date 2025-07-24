@@ -1,28 +1,29 @@
 use v5.36; # strict (5.12), warnings (5.35), signatures (5.36)
-use Module::Loaded ();
-use List::Util ();
 package PlackX::Framework 0.24 {
+  use List::Util qw(any);
+  use Module::Loaded ();
+
   our @plugins = ();
   sub required_modules { qw(Handler Request Response Router Router::Engine) }
   sub optional_modules { qw(URIx Template Config), @plugins }
 
   # Export ->app, load parent classes and load or create subclasses
   sub import (@options) {
-    my %required   = map { $_ => 1 } required_modules();
-    my $all_wanted = List::Util::any { $_ =~ m/^[:+]all$/ } @options;
+    my %required   = map { $_ => 1 } required_modules(); # not memoized to save ram
+    my $all_wanted = any { $_ =~ m/^[:+]all$/ } @options;
+    my $mod_wanted = $all_wanted ? sub { 1 } : sub { any { $_ =~ m/^[:+]{0,2}$_[0]$/i } @options };
     my $caller     = caller(0);
     export_app_sub($caller);
 
     # Load or create required modules, attempt to load optional ones
-    # We want to distinguish between modules not loading because they don't
-    # exist versus modules that exist but failed to load because of errors
+    # Distinguish between modules not existing and modules with errors
     foreach my $module (required_modules(), optional_modules()) {
       eval 'require PlackX::Framework::'.$module
         or die $@ if $required{$module};
       eval 'require '.$caller.'::'.$module or do {
         die $@ if module_is_broken($caller.'::'.$module);
         generate_subclass($caller.'::'.$module, 'PlackX::Framework::'.$module)
-          if $required{$module} or $all_wanted or module_wanted($module, \@options);
+          if $required{$module} or $all_wanted or $mod_wanted->($module);
       };
       export_app_namespace_sub($caller, $module)
         if Module::Loaded::is_loaded($caller.'::'.$module);
@@ -33,9 +34,8 @@ package PlackX::Framework 0.24 {
   sub export_app_sub ($destination_namespace) {
     no strict 'refs';
     *{$destination_namespace . '::app'} = sub ($class, @options) {
-      state $handler_class = $class . '::Handler';
-      $handler_class->to_app(@options);
-    }
+      ($class.'::Handler')->to_app(@options);
+    };
   }
 
   # Export app_namespace() to App::Request, App::Response, etc.
@@ -48,15 +48,12 @@ package PlackX::Framework 0.24 {
 
   # Helper to create a subclass and mark as loaded
   sub generate_subclass ($new_class, $parent_class) {
-    eval qq{
-      package $new_class { use parent '$parent_class' }
-      return Module::Loaded::mark_as_loaded('$new_class');
-    } or die "Cannot create class: $@";
+    eval "package $new_class; use parent '$parent_class'; 1" or die "Cannot create class: $@";
+    return Module::Loaded::mark_as_loaded($new_class);
   }
 
-  sub module_is_broken    ($mod) { my $fn = module_to_file($mod); exists $INC{$fn} and !defined $INC{$fn} }
-  sub module_to_file      ($mod) { Module::Loaded->_pm_to_file($mod) }
-  sub module_wanted ($mod, $ops) { List::Util::any { $_ =~ m/^[:+]{0,2}$mod$/i } @$ops }
+  sub module_is_broken ($mod) { my $fn = module_to_file($mod); exists $INC{$fn} and !defined $INC{$fn} }
+  sub module_to_file   ($mod) { Module::Loaded->_pm_to_file($mod) }
 }
 
 1;
