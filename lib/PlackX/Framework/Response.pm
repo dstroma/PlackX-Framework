@@ -88,6 +88,7 @@ package PlackX::Framework::Response {
   }
 
   sub encode_json ($data) {
+    return $data unless ref $data;
     require JSON::MaybeXS;
     state $json = JSON::MaybeXS->new(utf8 => 1);
     return $json->encode($data);
@@ -95,3 +96,104 @@ package PlackX::Framework::Response {
 }
 
 1;
+
+=pod
+
+=head1 NAME
+
+PlackX::Framework::Response - Subclass of Plack::Response for PlackX::Framework
+
+
+=head1 CLASS METHODS
+
+=over 4
+
+=item new()
+
+Returns a new object. This is done for you by the framework.
+
+=item GlobalResponse()
+
+If your app's subclass of PlackX::Framework::Handler's
+use_global_request_response method returns a true value, PlackX::Framework
+will set up a global response object for you, which can be retrieved via this
+class method.
+
+This feature is turned off by default to avoid action-at-a-distance bugs. It
+is preferred to use the request object instance passed to each route's
+subroutine.
+
+=back
+
+
+=head1 OBJECT METHODS
+
+=over 4
+
+=item continue()
+
+Syntactic sugar for returning a false value. Indicates to PlackX::Framework
+to execute the next matching route or filter.
+
+    return $response->continue; # equivalent to return;
+
+See also the stop() method below.
+
+=item flash(value)
+
+Sets the flash cookie to the value specified, or clears it if the value is
+false. PXF automatically clears the cookie on the subsequent request, unless
+you set a different one.
+
+=item flash_redirect(value, url)
+
+Combines flash(value) and redirect(url) with a 303 (SEE OTHER) response code.
+
+=item no_cache(BOOL)
+
+If passed a true value, adds HTTP Pragma and Cache-Control headers to "no-cache".
+If passed a false value, sets these headers to empty string.
+
+=item print($string), print(@strings)
+
+Adds $string or @strings to the response body.
+
+=item render_html($string)
+
+Sets the content-type to text/html and sets the response body to $string.
+
+=item render_json($ref)
+
+Sets the content-type to application/json and encodes $ref to JSON, setting
+the response body to the resulting string.
+
+=item render_template(@args)
+
+Shortcut for template->render(@ags)
+
+=item render_text($string)
+
+Sets the content-type to text/plain and sets the response body to $string.
+
+=item stash(), stash($hashref)
+
+Returns the current stash hashref, optionally setting it to a new one.
+
+=item stop()
+
+Syntactic sugar for returning the object itself. Indicates to PlackX::Framework
+that it should render the response.
+
+    return $response->stop; # equivalent to return $response;
+
+=item template()
+
+Returns the PlackX::Framework::Template object, or undef if templating has not
+been set up.
+
+=back
+
+
+=head1 META
+
+For author, copyright, and license, see PlackX::Framework.
