@@ -12,8 +12,8 @@ use Test::More;
   isa_ok($response, 'PlackX::Framework::Response');
 
   # Response properties
-  ok(!$response->is_request);
-  ok($response->is_response);
+  ok(!$response->isa('Plack::Request' ));
+  ok( $response->isa('Plack::Response'));
 
   # Stop and continue
   ok(ref $response->stop, 'Stop');

@@ -17,8 +17,9 @@ package MyExample::Request {
   isa_ok($request, 'PlackX::Framework::Request');
 
   # Request properties
-  ok($request->is_request);
-  ok(!$request->is_response);
+  ok( $request->isa('Plack::Request' ));
+  ok(!$request->isa('Plack::Response'));
+
   ok($request->is_get);
   ok(!$request->is_post);
   ok(!$request->is_put);

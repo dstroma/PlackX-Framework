@@ -96,8 +96,8 @@ package PlackX::Framework::Handler {
       }
 
       # Check if the result is actually another request object
-      return $class->handle_request($result) if $result->is_request;
-      return $class->error_response unless $result->is_response;
+      return $class->handle_request($result) if $result->isa('Plack::Request');
+      return $class->error_response unless $result->isa('Plack::Response');
       $response = $result;
 
       # Execute postfilters

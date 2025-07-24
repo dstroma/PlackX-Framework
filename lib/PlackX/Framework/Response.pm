@@ -4,13 +4,11 @@ package PlackX::Framework::Response {
 
   # Simple accessors and simple methods
   use Plack::Util::Accessor qw(stash cleanup_callbacks template);
-  sub is_request        { 0     }
-  sub is_response       { 1     }
-  sub continue          { undef }
-  sub stop              { $_[0] }
-  sub flash_cookie_name { PlackX::Framework::Request::flash_cookie_name(shift) }
+  sub continue                           { undef      }
+  sub stop                               { $_[0] || 1 }
   sub print ($self, @lines)              { push @{$self->{body}}, @lines; $self     }
   sub add_cleanup_callback ($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
+  *flash_cookie_name = \&PlackX::Framework::Request::flash_cookie_name;
 
   sub new ($class, @args) {
     my $self = $class->SUPER::new(@args);
@@ -69,7 +67,7 @@ package PlackX::Framework::Response {
     # Values are automatically encoded by Cookie::Baker
     $value //= '';
     my $max_age = $value ? 300 : -1; # If value is false we delete the cookie
-    $self->cookies->{flash_cookie_name($self)} = { value=>$value, path=>'/', 'max-age'=>$max_age, samesite=>'strict' };
+    $self->cookies->{$self->flash_cookie_name} = { value=>$value, path=>'/', 'max-age'=>$max_age, samesite=>'strict' };
     return $self;
   }
 

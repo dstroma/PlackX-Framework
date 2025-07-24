@@ -40,6 +40,7 @@ PlackX::Framework consists of the required modules:
 
 And the following optional modules:
 
+- PlackX::Framework::Config
 - PlackX::Framework::Template
 - PlackX::Framework::URIx
 

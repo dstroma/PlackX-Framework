@@ -117,6 +117,8 @@ And the following optional modules:
 
 =over 4
 
+=item PlackX::Framework::Config
+
 =item PlackX::Framework::Template
 
 =item PlackX::Framework::URIx
