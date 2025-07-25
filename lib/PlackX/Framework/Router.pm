@@ -4,6 +4,11 @@ package PlackX::Framework::Router {
   our $bases   = {};
   our $engines = {};
 
+  # Override in your subclass to change the export names
+  sub filter_request_keyword { 'filter';       }
+  sub route_request_keyword  { 'request';      }
+  sub uri_base_keyword       { 'request_base'; }
+
   sub import ($class, @extra) {
     my $export_to = caller(0);
 
@@ -15,8 +20,12 @@ package PlackX::Framework::Router {
     $engines->{$export_to} = $class->engine;
 
     # Export
-    no strict 'refs';
-    *{$export_to . '::' . $_} = \&{'DSL_'.$_} for qw(filter request request_base);
+    foreach my $export_sub (qw/filter_request route_request uri_base/) {
+      my $get_export_name = $export_sub . '_keyword';
+      my $export_name     = $class->$get_export_name;
+      no strict 'refs';
+      *{$export_to . '::' . $export_name} = \&{'DSL_' . $export_sub};
+    }
   }
 
   sub engine ($class) {
@@ -24,7 +33,7 @@ package PlackX::Framework::Router {
     return $engine_class->instance;
   }
 
-  sub DSL_filter ($when, $action, @slurp) {
+  sub DSL_filter_request ($when, $action, @slurp) {
     my ($package) = caller;
 
     die "usage: filter ('before' || 'after') => sub {}"
@@ -39,7 +48,7 @@ package PlackX::Framework::Router {
     return;
   }
 
-  sub DSL_request (@args) {
+  sub DSL_route_request (@args) {
     my ($package) = caller;
     my $action    = pop @args;
     my $routespec = shift @args;
@@ -65,7 +74,7 @@ package PlackX::Framework::Router {
     return;
   }
 
-  sub DSL_request_base ($base) {
+  sub DSL_uri_base ($base) {
     my ($package) = caller;
     $bases->{$package} = _remove_trailing_slash($base);
     return;
