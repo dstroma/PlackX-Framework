@@ -2,8 +2,8 @@ use v5.36;
 package PlackX::Framework::Response {
   use parent 'Plack::Response';
 
-  # Simple accessors and simple methods
   use Plack::Util::Accessor qw(stash cleanup_callbacks template);
+  sub GlobalResponse ($class)            { ($class->app_namespace.'::Handler')->global_response }
   sub continue                           { undef      }
   sub stop                               { $_[0] || 1 }
   sub print ($self, @lines)              { push @{$self->{body}}, @lines; $self     }
@@ -15,11 +15,6 @@ package PlackX::Framework::Response {
     $self->{cleanup_callbacks} //= [];
     $self->{body}              //= [];
     return bless $self, $class;
-  }
-
-  sub GlobalResponse ($class) {
-    my $handler_class = $class->app_namespace . '::Handler';
-    return $handler_class->global_response;
   }
 
   sub redirect ($self, @args) {
@@ -75,9 +70,9 @@ package PlackX::Framework::Response {
     return $self->flash($flashval)->redirect($url, 303);
   }
 
-  sub render_json ($self, $data)     { $self->render_content('application/json', encode_json($data)) }
-  sub render_text ($self, $text)     { $self->render_content('text/plain',       $text             ) }
-  sub render_html ($self, $html)     { $self->render_content('text/html',        $html             ) }
+  sub render_json     ($self, $data) { $self->render_content('application/json', encode_json($data)) }
+  sub render_text     ($self, $text) { $self->render_content('text/plain',       $text             ) }
+  sub render_html     ($self, $html) { $self->render_content('text/html',        $html             ) }
   sub render_template ($self, @args) { $self->{template}->render(@args); $self }
 
   sub render_content ($self, $content_type, $body) {
