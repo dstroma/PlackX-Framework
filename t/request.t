@@ -39,10 +39,6 @@ package MyExample::Request {
   # Namespace
   ok($request->app_namespace eq 'MyExample');
 
-  # Flash
-  ok(substr($request->flash_cookie_name, 0, 5) eq 'flash');
-  ok(8 < length $request->flash_cookie_name < 64);
-
   # Route Params
   $request->route_parameters({ user_id => '8', page => 'paper' });
   ok($request->route_param('user_id') eq '8');
@@ -56,9 +52,13 @@ package MyExample::Request {
   my @sdrinks = $request->param('drink');
   ok(@sdrinks == 1);
 
-  # Todo - flash cookie test
-
+  # Flash
+  require PlackX::Framework;
+  ok(substr($request->flash_cookie_name, 0, 5) eq 'flash');
+  ok(8 < length $request->flash_cookie_name < 64);
+  # TODO - more flash cookie tests?
 }
+
 done_testing();
 
 ####################################################

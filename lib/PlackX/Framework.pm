@@ -2,6 +2,7 @@ use v5.36; # strict (5.12), warnings (5.35), signatures (5.36)
 package PlackX::Framework 0.24 {
   use List::Util qw(any);
   use Module::Loaded ();
+  use Digest::MD5 ();
 
   our @plugins = ();
   sub required_modules { qw(Handler Request Response Router Router::Engine) }
@@ -49,9 +50,17 @@ package PlackX::Framework 0.24 {
   # Helper to create a subclass and mark as loaded
   sub generate_subclass ($new_class, $parent_class) {
     eval "package $new_class; use parent '$parent_class'; 1" or die "Cannot create class: $@";
-    return Module::Loaded::mark_as_loaded($new_class);
+    Module::Loaded::mark_as_loaded($new_class);
   }
 
+  # Utility functions
+  sub flash_cookie_name ($class) {
+    # Keep name to 16B. Memoize so we don't have calculate the md5 each time.
+    state %mem;
+    $mem{$class} ||= 'flash'.substr(md5_ubase64($class),0,11);
+  }
+
+  sub md5_ubase64      ($str) { Digest::MD5::md5_base64($str) =~ tr|+/=|-_|dr; }
   sub module_is_broken ($mod) { my $fn = module_to_file($mod); exists $INC{$fn} and !defined $INC{$fn} }
   sub module_to_file   ($mod) { Module::Loaded->_pm_to_file($mod) }
 }

@@ -8,7 +8,7 @@ package PlackX::Framework::Response {
   sub stop                               { $_[0] || 1 }
   sub print ($self, @lines)              { push @{$self->{body}}, @lines; $self     }
   sub add_cleanup_callback ($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
-  *flash_cookie_name = \&PlackX::Framework::Request::flash_cookie_name;
+  sub flash_cookie_name ($self)          { PlackX::Framework::flash_cookie_name($self->app_namespace) }
 
   sub new ($class, @args) {
     my $self = $class->SUPER::new(@args);

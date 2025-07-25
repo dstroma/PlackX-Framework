@@ -2,7 +2,6 @@ use v5.36;
 package PlackX::Framework::Request {
   use parent 'Plack::Request';
   use Carp qw(croak);
-  use Digest::MD5 ();
 
   use Plack::Util::Accessor qw(stash route_parameters);
   sub GlobalRequest ($class) { ($class->app_namespace.'::Handler')->global_request }
@@ -14,18 +13,11 @@ package PlackX::Framework::Request {
   sub is_ajax       ($self)  { uc($self->header('X-Requested-With') || '') eq 'XMLHTTPREQUEST' }
   sub destination   ($self)  { $self->{destination} // $self->path_info   }
   sub flash         ($self)  { $self->cookies->{$self->flash_cookie_name} }
-  sub md5_ub64      ($str)   { Digest::MD5::md5_base64($str) =~ tr|+/=|-_|dr; }
-
+  sub flash_cookie_name ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace) }
   sub param       ($self, $key) { scalar $self->parameters->{$key} } # faster than scalar $self->param($key)
   sub cgi_param   ($self, $key) { $self->SUPER::param($key)        } # CGI.pm compatibile
   sub route_param ($self, $key) { $self->{route_parameters}{$key}  }
   sub stash_param ($self, $key) { $self->{stash}{$key}             }
-
-  sub flash_cookie_name ($self) {
-    # Keep name to 16B. Memoize so we don't have calculate the md5 each time.
-    state %names;
-    $names{$self->app_namespace} ||= 'flash' . substr(md5_ub64($self->app_namespace),0,11);
-  }
 
   sub reroute ($self, $dest) {
     my $routelist = $self->{reroutes} //= [$self->path_info];
