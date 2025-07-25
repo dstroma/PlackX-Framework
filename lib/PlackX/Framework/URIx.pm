@@ -1,12 +1,6 @@
 use v5.36;
 package PlackX::Framework::URIx {
-  # Since this module is optional, we try to load it during compile-time and
-  # fail silently if it doesn't load, replacing new() to raise a fatal error
-  eval q{
-    use parent 'URI::Fast'; 1
-  } or eval q{
-    sub new { die 'URI::Fast could not be loaded'; }
-  };
+  use parent 'URI::Fast';
 
   sub new_from_request ($class, $requ) {
     # COPIED FROM PLACK::REQUEST
@@ -148,12 +142,14 @@ Deletes all parameters from the query string except for the ones named by the
 list.
 
 =head3 query_delete_keys_starting_with($string)
+
 =head3 query_delete_keys_ending_with($string)
 
 Deletes any parameters in the query string that start or end (respectively)
 with the string $string.
 
 =head3 query_delete_keys_matching($pattern)
+
 =head3 query_delete_all_except_keys_matching($pattern)
 
 Deletes any parameters in the query string that match or don't match
