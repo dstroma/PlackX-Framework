@@ -139,66 +139,144 @@ package PlackX::Framework::Router {
 
 =pod
 
-Examples:
+=head1 NAME
 
-package My::App::Controller;
-use My::App::Router;
-
-filter 'before' => sub {
-  my $request  = shift;
-  my $response = shift;
-  
-  unless ($request->{cookies}{logged_in}) {
-    $response->status(403);
-    return $response;
-  }
-  $request->{logged_in} = 1;
-  return;
-};
-
-request '/index' => sub {
-  ...
-  $template->render_index;
-};
-
-request get => '/default' => sub { }
-request post => '/form'   => sub { }
-
-request {get => '/login'} => sub {
-  # show login form
-  ...
-};
-
-request {post => '/login'} => sub {
-  my $request  = shift;
-  my $response = shift;
-
-  # do some processing to log in a user..
-  ...
-
-  # successful login
-  $request->redirect('/user/home');
-
-  # reroute the request
-  $request->reroute('/try_again');
-};
-
-request ['/list/user', '/user/list', '/users/list'] => sub {
-  ...
-};
-
-request {post => '/path1', put => '/path1'} => sub {
-  ...
-};
-
-request {delete => '/user/:id'} => sub {
-   ...
-};
-
-request {get => ['/path1', '/path2']} => sub {
-
-};
-
-request 'get|post' => '/somewhere' => sub {};
+PlackX::Framework::Router - Parse routes and export DSL for PXF apps
 
 
+=head1 SYNOPSIS
+
+    package My::App::Controller;
+    use My::App::Router;
+    request_base '/myapp';
+
+    filter before    => sub { ... }
+    filter after     => sub { ... }
+    request '/index' => sub { ... }
+
+
+=head1 EXPORTS
+
+This module exports the subroutines "filter", "request", and "request_base" to
+the calling package. These can then be used like DSL keywords to lay out your
+web app.
+
+You can choose your own keyword names by overridding them in your subclass this
+way:
+
+    package MyApp::Router {
+      use parent 'PlackX::Framework::Router';
+      sub filter_request_keyword { 'my_filter'; }
+      sub route_request_keyword  { 'my_route';  }
+      sub uri_base_keyword       { 'my_base';   }
+    }
+
+=over 4
+
+=item request_base STRING;
+
+Set the base URI path for all subsequent routes.
+
+=item filter ["before"|"after"} => sub { ... };
+
+Filter all subsequent routes. Your filter subroutine should return a false
+value to continue request processing. $response->continue is available for
+a semantic convenience. To render a response early, return the response
+object.
+
+=item request $PATH     => sub { ... };
+
+=item request $METHOD   => $PATH => sub { ... };
+
+=item request $ARRAYREF => sub { ... };
+
+=item request $HASHREF  => sub { ... };
+
+Execute the subroutine for the matching route and path. The $PATH may contain
+patterns described by PXF's routing engine, Router::Boom.
+
+The $METHOD may contain more than one method, separated by a pipe, for
+exampple, "get|post".
+
+You may specify a list of $PATHs in an $ARRAYREF.
+
+You may specify a hashref of key-value pairs, where the key is the HTTP
+request method, and the value is the desired path.
+
+See the section below for examples of various combinations.
+
+
+=head1 EXAMPLES
+
+    # Base example
+    request_base '/myapp';
+
+    # Filter example
+    # Fat arrow operator allows us to use "before" or "after" without quotes.
+    filter before => sub ($request, $response) {
+      unless ($request->{cookies}{logged_in}) {
+        $response->status(403);
+        return $response;
+      }
+      $request->{logged_in} = 1;
+      return;
+    };
+
+    # Simple route
+    # Because of the request_base, this will actually match /myapp/index
+    request '/index' => sub {
+      ...
+    };
+
+    # Route with method
+    request get => '/default' => sub { ... }
+    request post => '/form'   => sub { ... }
+
+    # Route with method, alternate formats
+    request {get => '/login'} => sub {
+      # show login form
+      ...
+    };
+
+    request {post => '/login'} => sub {
+      my $request  = shift;
+      my $response = shift;
+
+      # do some processing to log in a user..
+      ...
+
+      # successful login
+      $request->redirect('/user/home');
+
+      # reroute the request
+      $request->reroute('/try_again');
+    };
+
+    # Route with arrayref
+    request ['/list/user', '/user/list', '/users/list'] => sub {
+      ...
+    };
+
+    # Routes with hashref
+    request {post => '/path1', put => '/path1'} => sub {
+      ...
+    };
+
+    # Route with pattern matching
+    request {delete => '/user/:id'} => sub {
+      my $request = shift;
+      my $id = $request->route_param('id');
+    };
+
+    # Combination hashref arrayref
+    request {get => ['/path1', '/path2']} => sub {
+      ...
+    };
+
+    # Routes with alternate HTTP verbs
+    request 'get|post' => '/somewhere' => sub { ... };
+
+
+=head1 META
+
+For author, copyright, and license, see PlackX::Framework.
