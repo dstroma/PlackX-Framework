@@ -26,7 +26,7 @@ package MyApp {
   # Import routing DSL into this module
   use MyApp::Router;
 
-  request '/{template-name}' => sub ($request, $response) {
+  route '/{template-name}' => sub ($request, $response) {
     my $template_name = $request->route_param('template-name');
 
     # Check validity of template

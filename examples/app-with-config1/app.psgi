@@ -22,7 +22,7 @@ package My::ExampleApp {
   # Make a simple app that dumps our config hashref
   use My::ExampleApp::Router;
   use Data::Dumper;
-  request '/' => sub ($request, $response) {
+  route '/' => sub ($request, $response) {
     $response->content_type('text/plain');
     $response->print(Dumper config());
     return $response;

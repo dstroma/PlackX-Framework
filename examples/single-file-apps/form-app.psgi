@@ -72,7 +72,7 @@ package My::Example::App::Controller {
 	};
 
 	# Root request
-	request '/' => sub ($request, $response) {
+	route '/' => sub ($request, $response) {
 		my $body = qq{
 			<html>
 				<head><title>$app_name: Welcome</title>$style</head>
@@ -87,7 +87,7 @@ package My::Example::App::Controller {
 	};
 
 	# Different route
-	request '/login' => sub ($request, $response) {
+	route '/login' => sub ($request, $response) {
 		my $message = $request->stash->{'message'} || 'Enter your credentials below.';
 		my $want_method = $request->param('method') // 'post';
 		my $body = qq {
@@ -109,7 +109,7 @@ package My::Example::App::Controller {
 	};
 
 	# Demonstrate HTTP request method
-	request { post => '/login/submit' } => sub ($request, $response) {
+	route { post => '/login/submit' } => sub ($request, $response) {
 		my $username = $request->param('username');
 		my $password = $request->param('password');
 
@@ -131,7 +131,7 @@ package My::Example::App::Controller {
 		return $response;
 	};
 
-	request { get => '/login/submit' } => sub ($request, $response) {
+	route { get => '/login/submit' } => sub ($request, $response) {
 		my $uri_censored = $request->urix;
 		$uri_censored->query_set(password => 'XXXXX');
 		my $body = qq {
@@ -149,7 +149,7 @@ package My::Example::App::Controller {
 	};
 
 	# Demonstrate a callback (cleanup handler)
-	request '/callback' => sub ($request, $response) {
+	route '/callback' => sub ($request, $response) {
 		$response->add_post_response_callback(sub ($env) {
 			warn "help - Cleanup callback! Sleeping for 5 seconds. $request $response\n";
 			warn( ($env->{'psgix.cleanup'} ? '(server supports cleanup handler)' : '(cleanup NOT supported)') . "\n");
@@ -160,12 +160,12 @@ package My::Example::App::Controller {
 	};
 
 	# Demonstrate flash
-	request '/flash/set/:message' => sub ($request, $response) {
+	route '/flash/set/:message' => sub ($request, $response) {
 		$response->flash($request->route_param('message'));
 		$response->redirect('/flash/view');
 		return $response;
 	};
-	request '/flash/view' => sub ($request, $response) {
+	route '/flash/view' => sub ($request, $response) {
 		$response->print($request->flash);
 		return $response;
 	};

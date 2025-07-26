@@ -20,15 +20,15 @@ package My::Test::Controller {
   ok(eval q{
     filter 'before' => sub { $My::Test::Controller::somevar = $$; return; };
 
-    request '/home' => sub { };
-    request get => '/get-only' => sub { };
-    request post => '/post-only' => sub { };
-    request 'get|post|put' => '/getpostput' => sub {};
-    request 'delete|post|put' => '/deletepostput' => sub {};
-    request [qw(patch pick pluck)] => '/pverb' => sub {};
+    route '/home' => sub { };
+    route get => '/get-only' => sub { };
+    route post => '/post-only' => sub { };
+    route 'get|post|put' => '/getpostput' => sub {};
+    route 'delete|post|put' => '/deletepostput' => sub {};
+    route [qw(patch pick pluck)] => '/pverb' => sub {};
 
-    request_base '/app';
-    request '/article/:article' => sub { };
+    base '/app';
+    route '/article/:article' => sub { };
     1;
   }); warn $@ if $@;
 

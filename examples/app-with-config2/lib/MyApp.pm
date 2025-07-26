@@ -4,7 +4,7 @@ package MyApp {
   use PlackX::Framework;
   use MyApp::Router;
   use Data::Dumper;
-  request '/' => sub ($request, $response) {
+  route '/' => sub ($request, $response) {
     $response->content_type('text/plain');
     $response->print(Dumper config());
     return $response;

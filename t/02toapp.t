@@ -16,7 +16,7 @@ sub do_tests {
       use My::Test::App2::Router;
       # TODO: Currently, an app with no routes breaks!
       # Add a default route or warn if no routes?
-      request '/' => sub ($request, $response) {
+      route '/' => sub ($request, $response) {
         $response->print('Hello world!');
         $response;
       };
@@ -71,7 +71,7 @@ sub do_tests {
         my $config = config();
         # TODO: Currently, an app with no routes breaks!
         # Add a default route or warn if no routes?
-        request '/' => sub ($request, $response) {
+        route '/' => sub ($request, $response) {
           $response->print('Hello world!');
           $response;
         };

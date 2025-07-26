@@ -83,7 +83,7 @@ PlackX::Framework application could be all in one .psgi file:
     package MyProject {
       use PlackX::Framework; # loads and sets up the framework and subclasses
       use MyProject::Router; # exports router DSL
-      request '/' => sub ($request, $response) {
+      route '/' => sub ($request, $response) {
          $response->body('Hello, ', $request->param('name'));
          return $response;
       };
@@ -262,11 +262,11 @@ package, as shown in the introduction, or separate packages.
     # PlackX::Framework::Router!
     package MyApp::Controller {
       use MyApp::Router;
-      request_base '/app';
-      request '/home' => sub {
+      base '/app';
+      route '/home' => sub {
         ...
       };
-      request { post => '/login' } => sub {
+      route { post => '/login' } => sub {
         ...
       };
     }
