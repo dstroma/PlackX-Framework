@@ -9,6 +9,8 @@ package PlackX::Framework::Router {
   sub route_request_keyword  { 'request';      }
   sub uri_base_keyword       { 'request_base'; }
 
+  sub engine ($class) { ($class.'::Engine')->instance; }
+
   sub import ($class, @extra) {
     my $export_to = caller(0);
 
@@ -21,16 +23,10 @@ package PlackX::Framework::Router {
 
     # Export
     foreach my $export_sub (qw/filter_request route_request uri_base/) {
-      my $get_export_name = $export_sub . '_keyword';
-      my $export_name     = $class->$get_export_name;
+      my $export_name = eval "$class->$export_sub\_keyword" or die $@;
       no strict 'refs';
       *{$export_to . '::' . $export_name} = \&{'DSL_' . $export_sub};
     }
-  }
-
-  sub engine ($class) {
-    my $engine_class = $class . '::Engine';
-    return $engine_class->instance;
   }
 
   sub DSL_filter_request ($when, $action, @slurp) {
@@ -171,6 +167,35 @@ way:
       sub uri_base_keyword       { 'my_base';   }
     }
 
+For more detail, see the "DSL style" section.
+
+
+=head1 CLASS-METHOD STYLE
+
+You may add routes using class method calls, but this is not the preferred way
+to use this module. Class method routing does not currently support filters
+or setting URI path base.
+
+Mixing class method style and DSL style routing in the same app is not
+recommended.
+
+=over 4
+
+=item add_route($SPEC, $ACTION, %OPTIONS)
+
+Adds a route matching $SPEC to execute $ACTION. In the future, %OPTIONS
+can contain keys 'base', 'prefilters', and.or 'postfilters'.
+
+$ACTION should be a coderef, string containing a package and subroutine, e.g.
+"MyApp::Controller::index", or a hashref containing one of the keys 'template',
+'text', or 'html' with the value being a string containing a template filename,
+plain text content to render, or html to render, respectively.
+
+=back
+
+
+=head1 DSL-STYLE
+
 =over 4
 
 =item request_base STRING;
@@ -184,19 +209,22 @@ value to continue request processing. $response->continue is available for
 a semantic convenience. To render a response early, return the response
 object.
 
-=item request $PATH     => sub { ... };
+=item request $PATH     => $ACTION;
 
-=item request $METHOD   => $PATH => sub { ... };
+=item request $METHOD   => $PATH => $ACTION;
 
-=item request $ARRAYREF => sub { ... };
+=item request $ARRAYREF => $ACTION;
 
-=item request $HASHREF  => sub { ... };
+=item request $HASHREF  => $ACTION;
 
-Execute the subroutine for the matching route and path. The $PATH may contain
+Execute action $ACTION for the matching route and path. The $PATH may contain
 patterns described by PXF's routing engine, Router::Boom.
 
+The $ACTION is a coderef, subroutine name, or hashref, as described in the
+class method add_route, described above.
+
 The $METHOD may contain more than one method, separated by a pipe, for
-exampple, "get|post".
+example, "get|post".
 
 You may specify a list of $PATHs in an $ARRAYREF.
 
@@ -275,6 +303,19 @@ See the section below for examples of various combinations.
 
     # Routes with alternate HTTP verbs
     request 'get|post' => '/somewhere' => sub { ... };
+
+    # Action hashref instead of coderef
+    request '/' => {
+      template => 'index.tmpl'
+    };
+
+    request '/hello-world.txt' => {
+      text => 'Hello World'
+    };
+
+    request '/hello-world.html' => {
+      html => '<html><body>Hello World</body></html>'
+    };
 
 
 =head1 META
