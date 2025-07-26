@@ -124,7 +124,7 @@ Example 2:
     use PlackX::Framework;
     use My::WebApp::Router;
     use Data::Dumper;
-    request '/' => sub ($request, $response) {
+    route '/' => sub ($request, $response) {
       $response->print(Dumper config());
     }
   }

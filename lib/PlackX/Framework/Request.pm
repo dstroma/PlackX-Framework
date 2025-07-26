@@ -101,7 +101,7 @@ subroutine.
     package MyApp::Handler { use_global_request_response { 1 } }
     package MyApp::Routes {
       use MyApp::Router;
-      request '/someroute' => sub ($request, $response) {
+      route '/someroute' => sub ($request, $response) {
         my $g_request = MyApp::Request->GlobalRequest();
         # $request and $g_request "should" be the same object
         ...
@@ -134,7 +134,7 @@ depending on context, like CGI.pm or the mod_perl Apache request object.
 Return's the value of a route parameter, parsed by PlackX::Framework's router
 engine. For example:
 
-    request '/{page_name}' => sub ($request, $response) {
+    route '/{page_name}' => sub ($request, $response) {
       my $page_name = $request->route_param('page_name');
     };
 
@@ -183,7 +183,7 @@ using the reroute() method.
 Sets the destination to URL and returns the modified request object.
 
     # In a route sub:
-    request '/old/url' => sub ($request, $response) {
+    route '/old/url' => sub ($request, $response) {
       return $request->reroute('/new/url');
     };
 
@@ -204,7 +204,7 @@ installed and your app turned on this feature.
     package MyApp {
       use PlackX::Framework qw(:URIx); # or :all
       use MyApp::Router;
-      request '/seomwhere' => sub ($request, $response) {
+      route '/seomwhere' => sub ($request, $response) {
         my $uri_fast = $request->urix;
         ...
       };

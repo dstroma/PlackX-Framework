@@ -49,12 +49,12 @@ sub do_tests {
 			package $test_app_namespace {
 				use PlackX::Framework;
 				use $test_app_namespace\::Router;
-				request '/' => sub {
+				route '/' => sub {
                     my (\$request, \$response) = \@_;
 					\$response->print("<html>test from process $$</html>");
                     return \$response;
 				};
-				request '/empty' => sub { };
+				route '/empty' => sub { };
 			}
 			1;
 		},

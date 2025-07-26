@@ -5,7 +5,7 @@ use experimental 'signatures';
 package MyApp {
 	use PlackX::Framework;
 	use MyApp::Router;
-	request '/' => sub {
+	route '/' => sub {
 		my $html = '<html><head><title>Hello World</title></head><body><h1>Hello World</h1><p>Hello from a PSGI raw arrayref response.</p></body></html>';
 		return [200, [], [$html]];
 	};
@@ -14,7 +14,7 @@ package MyApp {
 package MyApp2 {
 	use PlackX::Framework;
 	use MyApp2::Router;
-	request '/app2' => sub {
+	route '/app2' => sub {
 		die "We should not be able to get here, as it's using MyApp2::Router instead of MyApp::Router";
 	}
 }
@@ -22,7 +22,7 @@ package MyApp2 {
 package MyApp::Controller::Main {
 	use MyApp::Router;
 
-	request '/plackx-response' => sub ($request, $response) {
+	route '/plackx-response' => sub ($request, $response) {
 		$response->print('<html>');
 		$response->print('<head><title>Hello World2</title></head>');
 		$response->print('<body><h1>Hello World2!</h1><p>Hello from a PlackX::Response object! Using print statements like it is the 90s again!</p></body>');
@@ -30,17 +30,17 @@ package MyApp::Controller::Main {
 		return $response;
 	};
 
-	request '/not-found' => sub {
+	route '/not-found' => sub {
 		# Empty - not returning a response will result in a 404 not found.
 	};
 
-	request '/not-found-custom' => sub ($request, $response) {
+	route '/not-found-custom' => sub ($request, $response) {
 		$response->status(404);
 		$response->body('<html><head><title>NOT FOUND</title></head><body><h1>Oh no :(</h1><p>This is a custom 404 response.</p></body></html>');
 		return $response;
 	};
 
-	request '/template' => sub ($request, $response) {
+	route '/template' => sub ($request, $response) {
 		# The following sets up templating manually with Template Toolkit (Template.pm)
 		# Normally this could be automatically loaded via subclassing PlackX::Framework::Template
 		# It has been enclosed into its own scope here to simulate use with auto-loading
@@ -61,7 +61,7 @@ package MyApp::Controller::Main {
 
 package MyApp::Controller::MoreExamples {
 	use MyApp::Router;
-	request_base '/more-examples';
+	base '/more-examples';
 
 	filter 'before' => sub ($request, $response) {
 		$response->print('<html><head><style type="text/css">body { font-family: Verdana, Helvetica; background: #333; color: #eee; }</style></head><body>');
@@ -78,45 +78,45 @@ package MyApp::Controller::MoreExamples {
 		return;
     };
 
-	request '/request-dump' => sub ($request, $response) {
+	route '/request-dump' => sub ($request, $response) {
 		require Data::Dumper;
 		$response->no_cache;
 		$response->print('<pre>', Data::Dumper->Dump([$request]), '</pre>');
 		return $response;
 	};
 
-	request '/response-dump' => sub ($request, $response) {
+	route '/response-dump' => sub ($request, $response) {
 		require Data::Dumper;
 		$response->no_cache;
 		$response->print('<pre>', Data::Dumper->Dump([$response]), '</pre>');
 		return $response;
 	};
 
-	request '/extra-slash' => sub ($request, $response) {
+	route '/extra-slash' => sub ($request, $response) {
 		$response->print('Extra slash?');
 		return $response;
 	};
 
-	request 'route_param/{somename}' => sub ($request, $response) {
+	route 'route_param/{somename}' => sub ($request, $response) {
 		$response->print('Hello ', $request->route_param('somename'));
 		return $response;
 	};
 
-	request { get => ['form', 'form/get'] } => sub ($request, $response) {
+	route { get => ['form', 'form/get'] } => sub ($request, $response) {
 		$response->print('<form method="POST"><input type="text" name="input"><input type="submit" value="Submit"></form></body>');
 		return $response;
 	};
 
-	request { post => 'form' } => sub ($request, $response) {
+	route { post => 'form' } => sub ($request, $response) {
 		$response->print(q{You posted: "}, $request->param('input'), q{".});
 		return $response;
 	};
 
-	request 'reroute' => sub ($request, $response) {
+	route 'reroute' => sub ($request, $response) {
 		return $request->reroute('/template');
 	};
 
-	request 'extra-filter' => sub ($request, $response) {
+	route 'extra-filter' => sub ($request, $response) {
 		$response->print('And here is the request response.');
 		return $response;
 	};

@@ -5,9 +5,9 @@ package PlackX::Framework::Router {
   our $engines = {};
 
   # Override in your subclass to change the export names
-  sub filter_request_keyword { 'filter';       }
-  sub route_request_keyword  { 'request';      }
-  sub uri_base_keyword       { 'request_base'; }
+  sub filter_request_keyword { 'filter' }
+  sub route_request_keyword  { 'route'  }
+  sub uri_base_keyword       { 'base'   }
 
   sub engine ($class) { ($class.'::Engine')->instance; }
 
@@ -148,7 +148,7 @@ PlackX::Framework::Router - Parse routes and export DSL for PXF apps
 
     filter before    => sub { ... }
     filter after     => sub { ... }
-    request '/index' => sub { ... }
+    route '/index' => sub { ... }
 
 
 =head1 EXPORTS
@@ -209,13 +209,13 @@ value to continue request processing. $response->continue is available for
 a semantic convenience. To render a response early, return the response
 object.
 
-=item request $PATH     => $ACTION;
+=item route $PATH     => $ACTION;
 
-=item request $METHOD   => $PATH => $ACTION;
+=item route $METHOD   => $PATH => $ACTION;
 
-=item request $ARRAYREF => $ACTION;
+=item route $ARRAYREF => $ACTION;
 
-=item request $HASHREF  => $ACTION;
+=item route $HASHREF  => $ACTION;
 
 Execute action $ACTION for the matching route and path. The $PATH may contain
 patterns described by PXF's routing engine, Router::Boom.
@@ -252,21 +252,21 @@ See the section below for examples of various combinations.
 
     # Simple route
     # Because of the request_base, this will actually match /myapp/index
-    request '/index' => sub {
+    route '/index' => sub {
       ...
     };
 
     # Route with method
-    request get => '/default' => sub { ... }
-    request post => '/form'   => sub { ... }
+    route get => '/default' => sub { ... }
+    route post => '/form'   => sub { ... }
 
     # Route with method, alternate formats
-    request {get => '/login'} => sub {
+    route {get => '/login'} => sub {
       # show login form
       ...
     };
 
-    request {post => '/login'} => sub {
+    route {post => '/login'} => sub {
       my $request  = shift;
       my $response = shift;
 
@@ -281,39 +281,39 @@ See the section below for examples of various combinations.
     };
 
     # Route with arrayref
-    request ['/list/user', '/user/list', '/users/list'] => sub {
+    route ['/list/user', '/user/list', '/users/list'] => sub {
       ...
     };
 
     # Routes with hashref
-    request {post => '/path1', put => '/path1'} => sub {
+    route {post => '/path1', put => '/path1'} => sub {
       ...
     };
 
     # Route with pattern matching
-    request {delete => '/user/:id'} => sub {
+    route {delete => '/user/:id'} => sub {
       my $request = shift;
       my $id = $request->route_param('id');
     };
 
     # Combination hashref arrayref
-    request {get => ['/path1', '/path2']} => sub {
+    route {get => ['/path1', '/path2']} => sub {
       ...
     };
 
     # Routes with alternate HTTP verbs
-    request 'get|post' => '/somewhere' => sub { ... };
+    route 'get|post' => '/somewhere' => sub { ... };
 
     # Action hashref instead of coderef
-    request '/' => {
+    route '/' => {
       template => 'index.tmpl'
     };
 
-    request '/hello-world.txt' => {
+    route '/hello-world.txt' => {
       text => 'Hello World'
     };
 
-    request '/hello-world.html' => {
+    route '/hello-world.html' => {
       html => '<html><body>Hello World</body></html>'
     };
 
