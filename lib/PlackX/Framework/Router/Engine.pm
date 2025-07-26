@@ -7,13 +7,16 @@ package PlackX::Framework::Router::Engine {
   sub instance ($class) { $instances{$class} ||= $class->new; }
 
   sub match ($self, $request) {
-    my @match = $self->SUPER::match('/['.$request->method.']' . $request->destination);
+    # Hack to make Router::Boom match against the HTTP request method
+    my $destination = '/['.$request->method.']' . $request->destination;
+    my @match = $self->SUPER::match($destination);
 
+    # Consolidate the match info into one hash
     if (@match and @match == 2) {
       my ($destin, $captures) = @match;
       my %matchinfo = (%$destin, %$captures);
-      delete $matchinfo{REQUEST_METHOD};
-      return bless \%matchinfo, 'PlackX::Framework::Router::Match';
+      delete $matchinfo{PXF_REQUEST_METHOD};
+      return bless \%matchinfo, 'PlackX::Framework::Router::Engine::Match';
     }
     return undef;
   }
@@ -54,12 +57,12 @@ package PlackX::Framework::Router::Engine {
     # $method can be undef, http verb, or verbs separated with pipe (e.g. 'get|post')
     if ($method) {
       if ($method =~ m/|/) {
-        $method = '/[{REQUEST_METHOD:' . uc $method . '}]';
+        $method = '/[{PXF_REQUEST_METHOD:' . uc $method . '}]';
       } else {
         $method = '/[' . uc $method . ']';
       }
     }
-    $method = '/[:REQUEST_METHOD]' unless $method;
+    $method = '/[:PXF_REQUEST_METHOD]' unless $method;
     $path   = $method . $path;
     return $path;
   }
