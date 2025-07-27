@@ -103,9 +103,9 @@ package PlackX::Framework::Router {
     $engine->add_route(
       routespec   => $spec,
       base        => $options{'base'}   ? _remove_trailing_slash($options{'base'}) : undef,
-      prefilters  => $options{'filter'} ? _coerce_arrayref($options{'filter'}{'before'}) : undef,
+      prefilters  => _coerce_to_arrayref_or_undef($options{'filter'}{'before'}),
       action      => _coerce_action_to_subref($action, $package),
-      postfilters => $options{'filter'} ? _coerce_arrayref($options{'filter'}{'after' }) : undef,
+      postfilters => _coerce_to_arrayref_or_undef($options{'filter'}{'after' }),
     );
   }
 
@@ -158,7 +158,15 @@ package PlackX::Framework::Router {
     return $action;
   }
 
-  sub _coerce_arrayref ($val) { ref $val eq 'ARRAY' ? $val : [$val] }
+  sub _coerce_to_arrayref_or_undef ($val) {
+    if (ref $val eq 'ARRAY' and @$val > 0) {
+      return $val;
+    } elsif (defined $val) {
+      return [$val];
+    } else {
+      return undef;
+    }
+  }
 }
 
 1;

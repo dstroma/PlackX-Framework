@@ -152,24 +152,37 @@ features, described below.
 
 ### PlackX::Framework::Router
 
-This module exports the request, request\_base, and filter functions to give you
-a minimalistic web app controller DSL. You can import this into your main app
-package, as shown in the introduction, or separate packages.
+This module exports the route, route\_base, global\_filter, and filter functions
+to give you a minimalistic web app controller DSL. You can import this into
+your main app package, as shown in the introduction, or separate packages.
 
     # Set up the app
     package MyApp {
       use PlackX::Framework;
     }
 
-    # Note: the name of your controller module doesn't matter, but it must
+    # Note: The name of your controller module doesn't matter, but it must
     # import from your router subclass, e.g., MyApp::Router, not directly from
     # PlackX::Framework::Router!
     package MyApp::Controller {
       use MyApp::Router;
+
       base '/app';
+
+      global_filter before => sub {
+        # I will be executed for ANY route ANYWHERE in MyApp!
+        ...
+      };
+
+      filter before => sub {
+        # I will only be executed for the routes listed below in this package.
+        ...
+      };
+
       route '/home' => sub {
         ...
       };
+
       route { post => '/login' } => sub {
         ...
       };

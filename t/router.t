@@ -1,6 +1,9 @@
 #!perl
 use v5.36;
 
+# TODO These tests need reworked! The code is very confusing to follow.
+# Probably should make a bunch of different apps and test them separately.
+
 package My::Test::Controller {
   use Test::More;
 
@@ -14,7 +17,7 @@ package My::Test::Controller {
 
   # Global filters
   My::Test::Controller::Router->add_global_filter(before => sub {
-    warn "I am a before filter.";
+    return;
   });
 
   # Helpers
@@ -23,7 +26,10 @@ package My::Test::Controller {
 
   # Routes
   ok(eval q{
-    filter 'before' => sub { $My::Test::Controller::somevar = $$; return; };
+    filter 'before' => sub {
+      $My::Test::Controller::somevar = $$;
+      return;
+    };
 
     route '/home' => sub { };
     route get => '/get-only' => sub { };
@@ -63,8 +69,11 @@ package My::Test::Controller {
   ok($match);
 
   # Test Filter
-  ok($match->{prefilters}[0] and ref $match->{prefilters}[0]{action} eq 'CODE');
-  ok(not $match->{prefilters}[0]{action}->());
+  # Note:
+  # Prefilter 0 is the global filter from line 16
+  # Prefilter 1 is the one that sets somevar to $$
+  ok($match->{prefilters}[1] and ref $match->{prefilters}[1]{action} eq 'CODE');
+  ok(not $match->{prefilters}[1]{action}->());
   ok($somevar == $$);
 
   # Route with params
@@ -115,10 +124,10 @@ package My::Test::Controller {
   ok($match && $match->{'param'} eq 'debate');
 
   # Method call with filter
-  My::Test::Controller::Router->add_route('/class-filter', sub { }, filter => { before => sub { $$*2; } });
+  My::Test::Controller::Router->add_route('/class-filter', sub { }, filter => { before => [sub { $$*2; }]});
   $env->{PATH_INFO} = $env->{SCRIPT_NAME} = '/class-filter';
   $match = match(new_request($env));
-  ok($match && $match->{prefilters} && $match->{prefilters}[0]->() == $$*2);
+  ok($match && $match->{prefilters} && $match->{prefilters}[1]->() == $$*2);
 
   # Method call with after filter
   My::Test::Controller::Router->add_route('/class-filter', sub { }, filters => { after => [sub { $$*3; }] });
