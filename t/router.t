@@ -5,9 +5,6 @@ use Test::More;
 do_tests();
 done_testing();
 
-# TODO
-# test class-method syntax, more regexes
-
 #######################################################################
 
 sub do_tests {
