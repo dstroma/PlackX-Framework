@@ -6,8 +6,6 @@ package PlackX::Framework::Handler {
   # Overridable options
   my %globals;
   sub use_global_request_response { } # Override in subclass to turn on
-  sub global_prefilters           { } # Override in subclass
-  sub global_postfilters          { } # Override in subclass
   sub global_request     ($class) { $globals{$class->app_namespace}->[0] }
   sub global_response    ($class) { $globals{$class->app_namespace}->[1] }
   sub not_found_response          { [404, [], ['Not Found']]                 }
@@ -83,7 +81,7 @@ package PlackX::Framework::Handler {
       $request->route_parameters($match);
 
       # Execute global and route-specific prefilters
-      for my $filterset ($class->global_prefilters, $match->{prefilters}) {
+      if (my $filterset = $match->{prefilters}) {
         my $ret = execute_filters($filterset, $request, $response);
         return finalized_response($ret) if $ret and is_valid_response($ret);
       }
@@ -91,7 +89,7 @@ package PlackX::Framework::Handler {
       # Execute main action
       my $result = $match->{action}->($request, $response);
       unless ($result and ref $result) {
-        warn "PlackX::Framework - Invalid result\n";
+        warn "PlackX::Framework - Invalid result '$result'\n";
         return $class->error_response;
       }
 
@@ -101,7 +99,7 @@ package PlackX::Framework::Handler {
       $response = $result;
 
       # Execute postfilters
-      for my $filterset ($class->global_postfilters, $match->{postfilters}) {
+      if (my $filterset = $match->{postfilters}) {
         my $ret = execute_filters($filterset, $request, $response);
         return finalized_response($ret) if $ret and is_valid_response($ret);
       }

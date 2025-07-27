@@ -12,6 +12,11 @@ package My::Test::Controller {
   use My::Test::Controller::Router;
   our $somevar;
 
+  # Global filters
+  My::Test::Controller::Router->add_global_filter(before => sub {
+    warn "I am a before filter.";
+  });
+
   # Helpers
   sub match { My::Test::Controller::Router->engine->match(@_) }
   sub new_request { PlackX::Framework::Request->new(@_) }

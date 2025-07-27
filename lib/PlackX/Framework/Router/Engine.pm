@@ -10,15 +10,38 @@ package PlackX::Framework::Router::Engine {
     # Hack to make Router::Boom match against the HTTP request method
     my $destination = '/['.$request->method.']' . $request->destination;
     my @match = $self->SUPER::match($destination);
+    return undef unless @match and @match == 2;
 
-    # Consolidate the match info into one hash
-    if (@match and @match == 2) {
-      my ($destin, $captures) = @match;
-      my %matchinfo = (%$destin, %$captures);
-      delete $matchinfo{PXF_REQUEST_METHOD};
-      return bless \%matchinfo, 'PlackX::Framework::Router::Engine::Match';
+    # Consolidate the match info
+    my ($destin, $captures) = @match;
+    my %matchinfo = (%$destin, %$captures);
+    delete $matchinfo{PXF_REQUEST_METHOD};
+
+    # Add global filters
+    for my $filter_type (qw/prefilters postfilters/) {
+      if (my $filters = $self->match_global_filters($filter_type, $request)) {
+        $matchinfo{$filter_type} ||= [];
+        # global filters should be before route-specific ones
+        unshift @{$matchinfo{$filter_type}}, @$filters;
+      }
     }
-    return undef;
+
+    # Return match data as hashref
+    return bless \%matchinfo, 'PlackX::Framework::Router::Engine::Match';
+  }
+
+  sub match_global_filters ($self, $kind, $request) {
+    return unless defined $self->{"global_$kind"};
+    my $matches = [];
+    foreach my $filter ($self->{"global_$kind"}->@*) {
+      my $pattern = $filter->{'pattern'};
+      push @$matches, $filter->{action}
+        if (!defined $pattern)
+        or (ref $pattern eq 'SCALAR' and $request->destination eq $$pattern)
+        or (ref $pattern eq 'Regexp' and $request->destination =~ $pattern)
+        or (substr($request->destination, 0, length $pattern) eq $pattern);
+    }
+    return $matches;
   }
 
   sub add_route ($router, %params) {
@@ -47,6 +70,19 @@ package PlackX::Framework::Router::Engine {
     }
   }
 
+  sub add_global_filter ($self, %params) {
+    my $when    = delete $params{'when'};
+    my $pattern = delete $params{'pattern'};
+    my $action  = delete $params{'action'};
+    die q{Usage: add_global_filter(when => 'before'|'after', ...)}
+      unless $when eq 'before' or $when eq 'after';
+
+    my $prefix = $when eq 'before' ? 'pre' : 'post';
+    my $hkey   = 'global_' . $prefix . 'filters';
+    $self->{$hkey} ||= [];
+    push @{$self->{$hkey}}, { pattern => $pattern, action => $action };
+  }
+
   sub path_with_base ($path, $base) {
     return $path unless $base and length $base;
     $path = '/' . $path if substr($path, 0, 1) ne '/';
@@ -72,6 +108,11 @@ package PlackX::Framework::Router::Engine {
     $path = path_with_method($path, $method);
     return $path;
   }
+}
+
+package PlackX::Framework::Router::Engine::Match {
+  sub prefilters  ($self) { }
+  sub postfilters ($self) { }
 }
 
 1;
