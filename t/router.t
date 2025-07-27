@@ -6,7 +6,7 @@ do_tests();
 done_testing();
 
 # TODO
-# test class-method syntax, multiple filters, global filters, more regexes
+# test class-method syntax, more regexes
 
 #######################################################################
 
@@ -34,6 +34,11 @@ sub do_tests {
   ok(
     ref \&My::Test::App::filter eq 'CODE',
     'DSL "filter" keyword imported'
+  );
+
+  ok(
+    ref \&My::Test::App::global_filter eq 'CODE',
+    'DSL "global_filter" keyword imported'
   );
 
   ok(
@@ -90,6 +95,11 @@ sub do_tests {
   #######################
   my sub match {
     My::Test::App::Router->engine->match(@_)
+  }
+  my sub execute_filter ($filter) {
+    return $filter->() if ref $filter eq 'CODE';
+    return $filter->{action}->() if ref $filter eq 'HASH';
+    die "Invalid filter";
   }
 
   ok(
@@ -246,7 +256,7 @@ sub do_tests {
 
     my $prefilter = $match->{prefilters}[0];
     $prefilter = (ref $prefilter eq 'CODE') ? $prefilter : $prefilter->{action};
-    $prefilter->();
+    execute_filter($prefilter);
 
     is(
       $My::Test::App::x => 1,
@@ -255,7 +265,7 @@ sub do_tests {
 
     my $postfilter = $match->{postfilters}[0];
     $postfilter = (ref $postfilter eq 'CODE') ? $postfilter : $postfilter->{action};
-    $postfilter->();
+    execute_filter($postfilter);
 
     is(
       $My::Test::App::x => 2,
@@ -273,6 +283,195 @@ sub do_tests {
       'Last route has post filters'
     );
   }
+
+  # Add a global filter
+  ok(
+    eval {
+      package My::Test::App {
+        our $x;
+        global_filter before => sub { $x = 100; };
+        global_filter after  => sub { $x = 200; };
+      }
+      1;
+    },
+    'Add global filters (DSL style)'
+  );
+
+  # Test path with global filter
+  {
+    my $match = match(sample_request(get => '/my-test-app/test1'));
+    ok(
+      eval { @{$match->{prefilters}} == 1 },
+      'First route should now have one pre filters'
+    );
+    ok(
+      eval { @{$match->{prefilters}} == 1 },
+      'First route should now have one post filters'
+    );
+    ok(
+      eval { execute_filter($match->{prefilters}[0]); 1 },
+      'Execute first global prefilter'
+    );
+    is(
+      $My::Test::App::x => 100,
+      'Prefilter set a variable',
+    );
+    ok(
+      eval { execute_filter($match->{postfilters}[0]); 1 },
+      'Execute first global postfilter'
+    );
+    is(
+      $My::Test::App::x => 200,
+      'Postfilter set a variable',
+    );
+  }
+
+  # Test with global and local filters; global is first, then local
+  {
+    my $match = match(sample_request(get => '/my-test-app/test1-aaa'));
+    ok(
+      eval { @{$match->{prefilters}} == 2 },
+      'First route should now have two pre filters (one global, one local)'
+    );
+    ok(
+      eval { @{$match->{postfilters}} == 2 },
+      'First route should now have two post filters (one global, one local)'
+    );
+    ok(
+      eval {
+        execute_filter($match->{prefilters}[0]);
+        execute_filter($match->{prefilters}[1]);
+        1;
+      },
+      'Execute both pre filters'
+    );
+    is(
+      $My::Test::App::x => 1,
+      'Local filter executed after global filter'
+    );
+    ok(
+      eval {
+        execute_filter($match->{postfilters}[0]);
+        execute_filter($match->{postfilters}[1]);
+        1;
+      },
+      'Execute both post filters'
+    );
+    is(
+      $My::Test::App::x => 2,
+      'Local filter executed after global filter'
+    );
+  }
+
+  # Use class method syntax
+  ok(
+    eval {
+      package My::Test::App::Controller {
+        My::Test::App::Router->add_route('/classy-uri', sub { });
+        My::Test::App::Router->add_route({ get =>  '/classy-get' },  sub { });
+        My::Test::App::Router->add_route({ post => '/classy-post' }, sub { });
+        My::Test::App::Router->add_route(['/class-1', '/class-2'] => sub { });
+
+        My::Test::App::Router->add_route('/restricted', sub { });
+        My::Test::App::Router->add_route('/restricted/{page}', sub { });
+
+        My::Test::App::Router->add_route('/verbatim', sub { });
+        My::Test::App::Router->add_route('/verbatim/{page}', sub { });
+
+        My::Test::App::Router->add_route('/{dir}/yellow' => sub { });
+        My::Test::App::Router->add_route('/{dir}/orange' => sub { });
+
+        # It shouldn't matter where we add them
+        My::Test::App::Router->add_global_filter(before => sub { 'b4'; }); # idx 1
+        My::Test::App::Router->add_global_filter(after  => sub { '4b'; });
+
+        My::Test::App::Router->add_global_filter(before => '/restricted' => sub { 'restrict'; }); # idx 2 if applied
+        My::Test::App::Router->add_global_filter(before => \'/verbatim'  => sub { 'verbatim'; }); # idx 2 if applied
+
+        My::Test::App::Router->add_global_filter(before => qr|/(.+)/yellow| => sub { 'yellow' }); # idx 2 if applied
+      }
+      1;
+    },
+    'Add routes and filters using class method syntax'
+  );
+  ok(
+    match(sample_request(get => '/classy-uri')),
+    'Match a class method route'
+  );
+  is(
+    match(sample_request(get => '/my-test-app/classy-uri')) => undef,
+    'Should not match with base from different class'
+  );
+  my $match = match(sample_request(get => '/classy-uri'));
+  is(
+    execute_filter($match->{prefilters}[1]) => 'b4',
+    'Execute filter added via class method (second added=index 1)'
+  );
+  is(
+    execute_filter(match(sample_request(get => '/restricted'))->{prefilters}[2]) => 'restrict',
+    'Global filter applied via class method works'
+  );
+  is(
+    execute_filter(match(sample_request(get => '/restricted/boo'))->{prefilters}[2]) => 'restrict',
+    'Global filter applied via class method works using substr pattern'
+  );
+  is(
+    execute_filter(match(sample_request(get => '/verbatim'))->{prefilters}[2]) => 'verbatim',
+    'Global filter applied via class method using scalar ref (verbatim string) works'
+  );
+  is(
+    match(sample_request(get => '/verbatim/boo'))->{prefilters}[2] => undef,
+    'Global filter using scalar ref (verbatim string) does not match when not supposed to'
+  );
+  is(
+    execute_filter(match(sample_request(get => '/something/yellow'))->{prefilters}[2]) => 'yellow',
+    'Regex filter matching works'
+  );
+  is(
+    match(sample_request(get => '/something/orange'))->{prefilters}[2] => undef,
+    'Regex filter matching does not match when it is not supposed to'
+  );
+
+
+  # Create a new app and change keywords
+  ok(
+    eval {
+      package My::Test::App2 {
+        use PlackX::Framework;
+      }
+      package My::Test::App2::Router {
+        sub global_filter_request_keyword { 'my_gfilter' }
+        sub filter_request_keyword        { 'my_lfilter' }
+        sub route_request_keyword         { 'my_request' }
+        sub uri_base_keyword              { 'my_uri'     }
+      }
+      package My::Test::App2::Controller {
+        use My::Test::App2::Router;
+        my_request '/another_test' => sub { };
+      }
+      1;
+    },
+    'Create router with custom keyword names'
+  );
+  ok(\&My::Test::App2::Controller::my_gfilter, 'Imported custom keyword for global_filter');
+  ok(\&My::Test::App2::Controller::my_lfilter, 'Imported custom keyword for filter');
+  ok(\&My::Test::App2::Controller::my_request, 'Imported custom keyword for route');
+  ok(\&My::Test::App2::Controller::my_uri,     'Imported custom keyword for base');
+
+  is(
+    match(sample_request(get => '/another_test')) => undef,
+    'Request to new app not answered by old app'
+  );
+
+  my sub match2 {
+    My::Test::App2::Router->engine->match(@_)
+  }
+
+  ok(
+    match2(sample_request(get => '/another_test')),
+    'Request to new app is answered by new app'
+  );
+
 }
 
 #######################################################################
