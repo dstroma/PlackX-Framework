@@ -78,7 +78,7 @@ package PlackX::Framework::Handler {
 
     my $rt_engine = ($class->app_namespace . '::Router::Engine')->instance;
     if (my $match = $rt_engine->match($request)) {
-      $request->route_parameters($match);
+      $request->route_parameters($match->{route_parameters});
 
       # Execute global and route-specific prefilters
       if (my $filterset = $match->{prefilters}) {

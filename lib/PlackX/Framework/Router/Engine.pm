@@ -2,27 +2,25 @@ use v5.36;
 package PlackX::Framework::Router::Engine {
   use parent 'Router::Boom';
 
-  # We use a Hybrid Singleton (one instance per inherited class)
-  my %instances;
-  sub instance ($class) { $instances{$class} ||= $class->new; }
+  # We use a Hybrid Singleton (one instance per subclass)
+  sub instance ($class) { state %instances; $instances{$class} ||= $class->new }
 
   # Matching object methods ###########################################
   sub match ($self, $request) {
-    # Hack to make Router::Boom match against the HTTP request method
+    # Prefix with HTTP method to include in match
     my $destination = '/['.$request->method.']' . $request->destination;
     my @match = $self->SUPER::match($destination);
     return undef unless @match and @match == 2;
 
-    # Consolidate the match info
-    my ($destin, $captures) = @match;
-    my %matchinfo = (%$destin, %$captures);
-    delete $matchinfo{PXF_REQUEST_METHOD};
+    # Consolidate the match info into one hash; remove http method paramf
+    my %matchinfo = (%{$match[0]}, route_parameters => $match[1]);
+    delete $matchinfo{route_parameters}{PXF_REQUEST_METHOD};
 
-    # Add global filters
+    # Add global filters (the match already has local filters in it)
     for my $filter_type (qw/prefilters postfilters/) {
-      if (my $filters = $self->match_global_filters($filter_type, $request)) {
+      if (my $filters = $self->_match_global_filters($filter_type, $request)) {
         $matchinfo{$filter_type} ||= [];
-        # global filters should be before route-specific ones
+        # unshift because global filters should be before local ones
         unshift @{$matchinfo{$filter_type}}, @$filters;
       }
     }
@@ -31,7 +29,7 @@ package PlackX::Framework::Router::Engine {
     return bless \%matchinfo, 'PlackX::Framework::Router::Engine::Match';
   }
 
-  sub match_global_filters ($self, $kind, $request) {
+  sub _match_global_filters ($self, $kind, $request) {
     return unless defined $self->{"global_$kind"};
     my $matches = [];
     foreach my $filter ($self->{"global_$kind"}->@*) {
@@ -59,14 +57,14 @@ package PlackX::Framework::Router::Engine {
     if (ref $route eq 'HASH') {
       foreach my $key (keys %$route) {
         my $paths = ref $route->{$key} ? $route->{$key} : [$route->{$key}];
-        $self->add(path_with_base_and_method($_, $base, uc $key), \%params) for @$paths;
+        $self->add(_path_with_base_and_method($_, $base, uc $key), \%params) for @$paths;
       }
       return;
     }
 
     # String or arrayref without HTTP verb
     $route = [$route] unless ref $route;
-    $self->add(path_with_base_and_method($_, $base), \%params) for @$route;
+    $self->add(_path_with_base_and_method($_, $base), \%params) for @$route;
     return;
   }
 
@@ -86,29 +84,27 @@ package PlackX::Framework::Router::Engine {
   }
 
   # Helper functions ##################################################
-  sub path_with_base ($path, $base) {
+  sub _path_with_base ($path, $base) {
     return $path unless $base and length $base;
     $path = '/' . $path if substr($path, 0, 1) ne '/';
     return $base . $path;
   }
 
-  sub path_with_method ($path, $method = undef) {
+  sub _path_with_method ($path, $method = undef) {
     # $method can be undef, http verb, or verbs separated with pipe (e.g. 'get|post')
     $method = $method ? ":$method" : '';
     $path   = "/[{PXF_REQUEST_METHOD$method}]$path";
     return $path;
   }
 
-  sub path_with_base_and_method ($path, $base, $method = undef) {
-    $path = path_with_base($path, $base);
-    $path = path_with_method($path, $method);
+  sub _path_with_base_and_method ($path, $base, $method = undef) {
+    $path = _path_with_base($path, $base);
+    $path = _path_with_method($path, $method);
     return $path;
   }
 }
 
-package PlackX::Framework::Router::Engine::Match {
-  use Plack::Util::Accessor qw(action prefilters postfilters);
-}
+package PlackX::Framework::Router::Engine::Match { }
 
 1;
 
@@ -125,6 +121,13 @@ This module provides route and global filter matching for PlackX::Framework.
 Please see PlackX::Framework and PlackX::Framework::Router for details of how
 to use routing and filters in your application.
 
+=head2 Difference between Router and Router::Engine
+
+The difference between PlackX::Framework::Router and PXF Router::Engine is that
+the Router class is primarily responsible for exporting the routing DSL
+and processing calls to add routes and filters, while the Router::Engine class
+is responsible for storing routes and matching routes against requests.
+
 
 =head1 CLASS METHODS
 
@@ -136,7 +139,9 @@ Create a new object.
 
 =item instance
 
-Return a singleton object, creating a new one if one does not exist already.
+Return an object, creating a new one if one does not exist already.
+This essentially allows the class to work as a singleton, with one
+PXF Router::Engine object per PXF application.
 
 =back
 
@@ -147,30 +152,31 @@ Return a singleton object, creating a new one if one does not exist already.
 
 =item add_route
 
+Adds a route. Please see documentation for PlackX::Framework::Router.
+Do not add routes directly to the engine unless you wish to hack on the
+framework.
+
 =item add_global_filter
+
+Adds a global filter. Please see documentation for PlackX::Framework::Router.
+Do not add filters directly to the engine unless you wish to hack on the
+framework.
 
 =item match
 
-=item match_global_filters
+Match a request against the route data. Returns the matched route and any
+prefilters and postfilters that should be executed, or undef if no route
+matches. The returned hashref contains the action to execute, filters
+applicable to the route, and any parameters in the route, if applicable.
+
+    {
+      action           => CODEREF,
+      prefilters       => ARRAYREF, # or undef
+      postfilters      => ARRAYREF, # or undef
+      route_parameters => HASHREF
+    }
 
 =back
-
-
-=head1 FUNCTIONS
-
-=over 4
-
-=item path_with_base($path, $base)
-
-Prefix $path with $base, adding a forward slash if necessary.
-
-=item path_with_method($path, $method|undef)
-
-Prefix $path with a route parameter optionally matching $method.
-
-=item path_with_base_and_method($path, $base, $method|undef)
-
-Combines the above functions.
 
 
 =head1 META

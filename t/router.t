@@ -135,7 +135,7 @@ sub do_tests {
   );
 
   is(
-    match(sample_request(get => '/my-test-app/test1/page/whatever'))->{some_param} => 'whatever',
+    match(sample_request(get => '/my-test-app/test1/page/whatever'))->{route_parameters}{some_param} => 'whatever',
     'Route param set successfully'
   );
 
