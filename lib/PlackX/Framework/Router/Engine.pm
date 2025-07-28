@@ -3,44 +3,52 @@ package PlackX::Framework::Router::Engine {
   use parent 'Router::Boom';
 
   # We use a Hybrid Singleton (one instance per subclass)
-  sub instance ($class) { state %instances; $instances{$class} ||= $class->new }
+  sub new      ($class) { $class->instance; }
+  sub instance ($class) { state %instances; $instances{$class} ||= $class->SUPER::new }
 
   # Matching object methods ###########################################
   sub match ($self, $request) {
-    # Prefix with HTTP method to include in match
-    my $destination = '/['.$request->method.']' . $request->destination;
-    my @match = $self->SUPER::match($destination);
-    return undef unless @match and @match == 2;
+    die 'Usage: $engine->match($plackx_framework_request)'
+      unless $request and ref $request and $request->can('destination');
 
-    # Consolidate the match info into one hash; remove http method paramf
-    my %matchinfo = (%{$match[0]}, route_parameters => $match[1]);
-    delete $matchinfo{route_parameters}{PXF_REQUEST_METHOD};
+    # Prefix with [ method ] to include in match
+    my $destination = sprintf('/[ %s ]%s', $request->method, $request->destination);
+    my ($match, $captures) = $self->SUPER::match($destination)
+      or return undef;
+
+    delete $captures->{PXF_REQUEST_METHOD}; # delete because internal use only
+    $match->{route_parameters} = $captures;
 
     # Add global filters (the match already has local filters in it)
     for my $filter_type (qw/prefilters postfilters/) {
       if (my $filters = $self->_match_global_filters($filter_type, $request)) {
-        $matchinfo{$filter_type} ||= [];
-        # unshift because global filters should be before local ones
-        unshift @{$matchinfo{$filter_type}}, @$filters;
+        $match->{$filter_type} ||= [];
+        # put global prefilters before local and global postfilters after local
+        unshift @{$match->{$filter_type}}, @$filters if $filter_type eq 'prefilters';
+        push    @{$match->{$filter_type}}, @$filters if $filter_type eq 'postfilters';
       }
     }
 
-    # Return match data as hashref
-    return bless \%matchinfo, 'PlackX::Framework::Router::Engine::Match';
+    return $match;
   }
 
   sub _match_global_filters ($self, $kind, $request) {
+    die "invalid kind of filters: '$kind'"
+      unless $kind eq 'prefilters' or $kind eq 'postfilters';
+
+    # Shortcut?
     return unless defined $self->{"global_$kind"};
-    my $matches = [];
+
+    my @matches = ();
     foreach my $filter ($self->{"global_$kind"}->@*) {
       my $pattern = $filter->{'pattern'};
-      push @$matches, $filter->{action}
+      push @matches, $filter->{action}
         if (!defined $pattern)
         or (ref $pattern eq 'SCALAR' and $request->destination eq $$pattern)
         or (ref $pattern eq 'Regexp' and $request->destination =~ $pattern)
         or (substr($request->destination, 0, length $pattern) eq $pattern);
     }
-    return $matches;
+    return \@matches;
   }
 
   # Meta object methods - add route or global filter ##################
@@ -91,9 +99,12 @@ package PlackX::Framework::Router::Engine {
   }
 
   sub _path_with_method ($path, $method = undef) {
-    # $method can be undef, http verb, or verbs separated with pipe (e.g. 'get|post')
+    # $method can verb or verbs separated with pipe (e.g. 'get|post'), or undef
+    # A real request uri should never have [] or spaces in it, so use those to
+    # separate the method from the remaining uri. Thankfully Router::Boom does
+    # not check uris for validity, otherwise this would not work.
     $method = $method ? ":$method" : '';
-    $path   = "/[{PXF_REQUEST_METHOD$method}]$path";
+    $path   = "/[ {PXF_REQUEST_METHOD$method} ]$path";
     return $path;
   }
 
@@ -103,8 +114,6 @@ package PlackX::Framework::Router::Engine {
     return $path;
   }
 }
-
-package PlackX::Framework::Router::Engine::Match { }
 
 1;
 
@@ -123,8 +132,8 @@ to use routing and filters in your application.
 
 =head2 Difference between Router and Router::Engine
 
-The difference between PlackX::Framework::Router and PXF Router::Engine is that
-the Router class is primarily responsible for exporting the routing DSL
+The difference between PXF's ::Router module and the ::Router::Engine is that
+the Router module is primarily responsible for exporting the routing DSL
 and processing calls to add routes and filters, while the Router::Engine class
 is responsible for storing routes and matching routes against requests.
 
@@ -133,15 +142,11 @@ is responsible for storing routes and matching routes against requests.
 
 =over 4
 
-=item new
-
-Create a new object.
-
-=item instance
+=item new, instance
 
 Return an object, creating a new one if one does not exist already.
-This essentially allows the class to work as a singleton, with one
-PXF Router::Engine object per PXF application.
+This essentially allows each subclass to work as a singleton, so that there is
+one PXF Router::Engine object per PXF application.
 
 =back
 
@@ -171,10 +176,13 @@ applicable to the route, and any parameters in the route, if applicable.
 
     {
       action           => CODEREF,
-      prefilters       => ARRAYREF, # or undef
-      postfilters      => ARRAYREF, # or undef
+      prefilters       => ARRAYREF|undef,
+      postfilters      => ARRAYREF|undef,
       route_parameters => HASHREF
     }
+
+Again, PlackX::Framework handles this for you, so there should be no need to
+use this method directly.
 
 =back
 

@@ -355,8 +355,8 @@ sub do_tests {
       'Execute both post filters'
     );
     is(
-      $My::Test::App::x => 2,
-      'Local filter executed after global filter'
+      $My::Test::App::x => 200,
+      'Global postfilter executed after local filter'
     );
   }
 
