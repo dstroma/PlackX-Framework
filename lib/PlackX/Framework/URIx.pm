@@ -25,14 +25,14 @@ package PlackX::Framework::URIx {
     return $class->new($base . $path)->normalize;
   }
 
-  sub goto ($self, $rel_destination) {
+  sub relative ($self, $rel_destination) {
     die 'Object method called as class method' unless ref $self;
     my $rel = (ref $self)->new("$rel_destination");
     my $new = $rel->absolute("$self");
     return $new;
   }
 
-  sub goto_with_query ($self, $rel_destination) {
+  sub relative_with_query ($self, $rel_destination) {
     die 'Object method called as class method' unless ref $self;
     my $rel = (ref $self)->new("$rel_destination");
     my $new = $rel->absolute("$self");
