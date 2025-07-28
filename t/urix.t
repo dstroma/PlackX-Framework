@@ -20,7 +20,7 @@ sub do_tests {
   use_ok($class);
 
   {
-    my $uri = $class->new('http://www.google.com/?search=xxx');
+    my $uri = $class->new('http://www.somescraper.xx/?search=xxx');
     ok($uri, 'Successfully call method new()');
     ok(ref $uri && $uri->isa($class), 'Got an object');
 
@@ -51,17 +51,17 @@ sub do_tests {
   }
 
   {
-    my $uri = $class->new('http://www.google.com/?car=edsel&cart=shopping&carnival=fun&art=painting&val=value');
+    my $uri = $class->new('http://www.schmoogle.com/?car=edsel&cart=shopping&carnival=fun&art=painting&val=value');
     $uri->query_delete_keys_starting_with('car');
     ok($uri !~ m/car/ && $uri !~ m/carnival/ && $uri !~ m/cart/ && $uri =~ m/art=painting/ && $uri =~ m/val=value/, 'Delete values starting with a string');
     say $uri if $verbose;
   }
 
   {
-    my $uri = $class->new('http://www.google.com/search/more/page.html');
-    is($uri->goto('other.html') => 'http://www.google.com/search/more/other.html' => 'relative page goes to correct absolute url');
-    is($uri->goto('/')   => 'http://www.google.com/'            => '/ goes to root');
-    is($uri->goto('./')  => 'http://www.google.com/search/more' => './ goes to parent path');
-    is($uri->goto('../') => 'http://www.google.com/search'      => '../ goes up a path');
+    my $uri = $class->new('http://www.schmoogle.com/search/more/page.html');
+    is($uri->goto('other.html') => 'http://www.schmoogle.com/search/more/other.html' => 'relative page goes to correct absolute url');
+    is($uri->goto('/')          => 'http://www.schmoogle.com/'                       => '/ goes to root');
+    is($uri->goto('./')         => 'http://www.schmoogle.com/search/more'            => './ goes to parent path');
+    is($uri->goto('../')        => 'http://www.schmoogle.com/search'                 => '../ goes up a path');
   }
 }
