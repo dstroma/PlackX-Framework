@@ -22,7 +22,20 @@ package PlackX::Framework::URIx {
 
     $base =~ s!/$!! if $path =~ m!^/!;
 
-    return URI::Fast->new($base . $path)->normalize;
+    return $class->new($base . $path)->normalize;
+  }
+
+  sub goto ($self, $rel_destination) {
+    my $rel = (ref $self)->new($rel_destination);
+    my $new = $rel->absolute($self);
+    return $new;
+  }
+
+  sub goto_with_query ($self, $rel_destination) {
+    my $rel = (ref $self)->new($rel_destination);
+    my $new = $rel->absolute($self);
+    $new->query(scalar $self->query);
+    return $new;
   }
 
   sub query_set ($self, @new) {

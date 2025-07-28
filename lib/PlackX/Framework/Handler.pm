@@ -123,6 +123,7 @@ package PlackX::Framework::Handler {
 
   sub check_request_prefix ($class, $request) {
     if ($class->can('uri_prefix') and my $prefix = $class->uri_prefix) {
+      $prefix = "/$prefix" if substr($prefix,0,1) ne '/';
       if (substr($request->destination, 0, length $prefix) eq $prefix) {
         $request->{destination} = substr($request->destination, length $prefix);
         return;
