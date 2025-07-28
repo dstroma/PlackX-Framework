@@ -469,6 +469,32 @@ sub do_tests {
     'Request to new app is answered by new app'
   );
 
+  # Create another app and use ONLY class method syntax
+  # Do not import from the Router class
+  ok(
+    eval {
+      package My::Test::App3 {
+        use PlackX::Framework;
+        My::Test::App3::Router->add_route('/app3' => sub { 333; });
+      }
+      1;
+    },
+    'Create an app with a route without importing from ::Router'
+  );
+
+  my sub match3 {
+    My::Test::App3::Router->engine->match(@_)
+  }
+  is(
+    match3(sample_request(get => '/app3'))->{action}->() => '333',
+    'Request to third app gets result'
+  );
+  is(
+    match3(sample_request(get => '/another_test')) => undef,
+    'Apps do not interfere with each other'
+  );
+
+
 }
 
 #######################################################################
