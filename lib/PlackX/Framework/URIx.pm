@@ -1,19 +1,26 @@
 use v5.36;
 package PlackX::Framework::URIx {
   use parent 'URI::Fast';
-  use URI ();
   use Scalar::Util qw(blessed);
+  use URI ();
+  use URI::Escape ();
 
-  sub new ($class, $arg) {
-    return $class->new_from_pxf_request($arg)
-      if blessed $arg and $arg->isa('PlackX::Framework::Request');
-    return $class->SUPER::new($arg);
-  }
-
-  sub new_from_pxf_request ($class, $requ) {
-    # COPIED FROM PLACK::REQUEST AND MODIFIED FOR PLACKX::FRAMEWORK
+  # new_from_pxfrequest
+  # SUBROUTINE COPIED FROM PLACK::REQUEST AND MODIFIED FOR PLACKX::FRAMEWORK
+  sub new_from_pxfrequest ($class, $requ) {
     my $base = $requ->_uri_base;
-    my $path_info = $requ->destination; # equivalent to PATH_INFO
+
+    # PXF MODIFICATION
+    # We can't use $requ->env->{PATH_INFO} in case the request has been rerouted
+    # with $request->reroute(...), and we also can't use ->destination() as-is
+    # because PXF::Handler might have modified it to remove the app uri_prefix
+    my $path_info;
+    {
+      my $removed_prefix = defined $requ->{removed_prefix} ? $requ->{removed_prefix} : '';
+      my $destination    = $requ->destination;
+      $path_info         = $removed_prefix . $destination;
+    }
+    # END PXF MODIFICATION
 
     # We have to escape back PATH_INFO in case they include stuff like
     # ? or # so that the URI parser won't be tricked. However we should
@@ -25,13 +32,14 @@ package PlackX::Framework::URIx {
     # See RFC 3986 before modifying.
     my $path_escape_class = q{^/;:@&=A-Za-z0-9\$_.+!*'(),-};
 
-    my $path = URI::Escape::uri_escape($path_info || '', $path_escape_class);
+#   my $path = URI::Escape::uri_escape($requ->env->{PATH_INFO} || '', $path_escape_class); # ORIGINAL
+    my $path = URI::Escape::uri_escape($path_info              || '', $path_escape_class); # PXF MODIFICATION
     $path .= '?' . $requ->env->{QUERY_STRING}
         if defined $requ->env->{QUERY_STRING} && $requ->env->{QUERY_STRING} ne '';
 
     $base =~ s!/$!! if $path =~ m!^/!;
 
-    return $class->SUPER::new($base . $path)->normalize;
+    return $class->new($base . $path)->normalize;
   }
 
 
@@ -44,14 +52,14 @@ package PlackX::Framework::URIx {
   #  - URI.pm is a pain to subclass, returning objects blessed into different
   #    classes depending on the argument
 
-  sub to ($self, $rel) {
+  sub goto ($self, $rel) {
     die 'Object method called as class method' unless ref $self;
     my $new = URI->new_abs("$rel", "$self");
     return (ref $self)->new("$new");
   }
 
-  sub to_with_query ($self, $rel) {
-    my $new = $self->to($rel);
+  sub goto_with_query ($self, $rel) {
+    my $new = $self->goto($rel);
     $new->query(scalar $self->query);
     return $new;
   }

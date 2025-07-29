@@ -5,7 +5,7 @@ package MyApp::Controllers {
 
   base '/app';
 
-  route ['', '/'] => sub ($request, $response) {
+  route ['/', '/home'] => sub ($request, $response) {
     $response->template->set(page_name => 'Home');
     return $response->render_template('index.html');
   };
@@ -22,6 +22,16 @@ package MyApp::Controllers {
     );
     return $response->render_template('feedback-thanks.html');
     return $response;
+  };
+
+  # Example hashref+arrayref combo
+  route { get => ['/dump', '/dump.txt'] } => sub ($request, $response) {
+    # Shallow copy and remove circular reference
+    my %request_copy = %$request;
+    $request_copy{'stash'} = 'DUMMY';
+
+    require Data::Dumper;
+    $response->render_text(Data::Dumper::Dumper({ request => \%request_copy }));
   };
 
   ### Secret Area #####################################################

@@ -66,10 +66,9 @@ package PlackX::Framework::Handler {
       };
     }
 
-    # Clear flash if set, set response defaults
+    # Clear flash if set, set response defaults, and route request
     $response->flash(undef) if $request->flash;
     $response->content_type('text/html');
-
     return $class->route_request($request, $response);
   }
 
@@ -79,6 +78,7 @@ package PlackX::Framework::Handler {
 
     my $rt_engine = ($class->app_namespace . '::Router::Engine')->instance;
     if (my $match = $rt_engine->match($request)) {
+      $request->route_base($match->{base}) if defined $match->{base};
       $request->route_parameters($match->{route_parameters});
 
       # Execute global and route-specific prefilters
@@ -126,7 +126,8 @@ package PlackX::Framework::Handler {
     if ($class->can('uri_prefix') and my $prefix = $class->uri_prefix) {
       $prefix = "/$prefix" if substr($prefix,0,1) ne '/';
       if (substr($request->destination, 0, length $prefix) eq $prefix) {
-        $request->{destination} = substr($request->destination, length $prefix);
+        $request->{destination}    = substr($request->destination, length $prefix);
+        $request->{removed_prefix} = $prefix;
         return;
       }
       return not_found_response();

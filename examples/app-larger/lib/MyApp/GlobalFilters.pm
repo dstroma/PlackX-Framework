@@ -12,17 +12,24 @@ package MyApp::GlobalFilters {
     my $start = $request->stash_param('response_start_time');
     my $end   = Time::HiRes::time();
     my $elapsed = int(10000 * ($end - $start))/100;
-    my $info    = <<~HDOC;
-      <!--
-        Debugging:
-          Request  object: $request
-          Response object: $response
-          Start time:      $start
-          End time:        $end
-          Elapsed time:    $elapsed ms
-      -->
-      HDOC
-    $response->print($info);
+    my $info    = <<~HEREDOC;
+
+      MyApp::GlobalFilters
+      Debugging:
+        Request  object: $request
+        Response object: $response
+        Start time:      $start
+        End time:        $end
+        Elapsed time:    $elapsed ms
+      HEREDOC
+
+    if ($response->content_type =~ m/html/) {
+      $response->print("<!--$info-->");
+    } elsif ($response->content_type =~ m/plain/) {
+      $response->print($info);
+    } else {
+      warn $info;
+    }
     return;
   };
 }

@@ -59,7 +59,7 @@ package PlackX::Framework::Router::Engine {
   # Meta object methods - add route or global filter ##################
   sub add_route ($self, %params) {
     my $route   = delete $params{routespec};
-    my $base    = delete $params{base};
+    my $base    = $params{base}; # Need to keep base to compute URLs later
 
     # Validate subroutine params
     die 'add_route(routespec => STRING|ARRAYREF|HASHREf)'

@@ -3,9 +3,10 @@ package PlackX::Framework::Request {
   use parent 'Plack::Request';
   use Carp qw(croak);
 
-  use Plack::Util::Accessor qw(stash route_parameters);
+  use Plack::Util::Accessor qw(stash route_base route_parameters);
   sub GlobalRequest    ($class) { ($class->app_namespace.'::Handler')->global_request }
   sub max_reroutes              { 16 }
+  sub app_base          ($self) { eval {$self->app_namespace->uri_prefix} || ''      }
   sub is_get            ($self) { uc $self->method eq 'GET'    }
   sub is_post           ($self) { uc $self->method eq 'POST'   }
   sub is_put            ($self) { uc $self->method eq 'PUT'    }
@@ -18,9 +19,26 @@ package PlackX::Framework::Request {
   sub cgi_param   ($self, $key) { $self->SUPER::param($key)        } # CGI.pm compatibile
   sub route_param ($self, $key) { $self->{route_parameters}{$key}  }
   sub stash_param ($self, $key) { $self->{stash}{$key}             }
-  sub uri_to      ($self, $uri) { $self->urix->to($uri)            }
-  sub urix              ($self) { ($self->app_namespace.'::URIx')->new($self) }
+  sub uri_goto    ($self, $uri) { $self->urix->goto($uri)          }
+  sub urix              ($self) { ($self->app_namespace.'::URIx')->new_from_pxfrequest($self) }
+  sub with_slash         ($uri) { substr($uri, 0, 1) eq '/' ? $uri : '/'.$uri; }
 
+  # Take a path and apply app and route prefixes
+  sub rel_uri_for ($self, $uri) {
+    return
+      with_slash($self->app_base)   .
+      with_slash($self->route_base) .
+      with_slash($uri)              ;
+  }
+
+  # Take a path and apply app and route prefixes, domain name, etc.
+  sub abs_uri_for ($self, $uri) {
+    return $self->uri_goto($self->rel_uri_for($uri));
+  }
+  *uri_for = \&abs_uri_for;
+
+  # Send request somewhere else without issuing the client an HTTP redirect
+  # ::Handler will reprocess if it gets a request instead of response obj
   sub reroute ($self, $dest) {
     $self->{destination} = $dest;
     $self->{reroutes}  //= [$self->path_info];

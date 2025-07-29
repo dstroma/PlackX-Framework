@@ -9,6 +9,10 @@ package PlackX::Framework::Response {
   sub print ($self, @lines)              { push @{$self->{body}}, @lines; $self     }
   sub add_cleanup_callback ($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
   sub flash_cookie_name ($self)          { PlackX::Framework::flash_cookie_name($self->app_namespace) }
+  sub render_json         ($self, $data) { $self->render_content('application/json', encode_json($data)) }
+  sub render_text         ($self, $text) { $self->render_content('text/plain',       $text             ) }
+  sub render_html         ($self, $html) { $self->render_content('text/html',        $html             ) }
+  sub render_template     ($self, @args) { $self->{template}->render(@args); $self                       }
 
   sub new ($class, @args) {
     my $self = $class->SUPER::new(@args);
@@ -70,23 +74,22 @@ package PlackX::Framework::Response {
     return $self->flash($flashval)->redirect($url, 303);
   }
 
-  sub render_json     ($self, $data) { $self->render_content('application/json', encode_json($data)) }
-  sub render_text     ($self, $text) { $self->render_content('text/plain',       $text             ) }
-  sub render_html     ($self, $html) { $self->render_content('text/html',        $html             ) }
-  sub render_template ($self, @args) { $self->{template}->render(@args); $self }
-
-  sub render_content ($self, $content_type, $body) {
+  sub render_content ($self, $content_type, $content) {
     $self->status(200);
     $self->content_type($content_type);
-    $self->body($body);
+    $self->print($content);
     return $self;
   }
 
   sub encode_json ($data) {
     return $data unless ref $data;
     require JSON::MaybeXS;
-    state $json = JSON::MaybeXS->new(utf8 => 1);
-    return $json->encode($data);
+    state $json_codec = JSON::MaybeXS->new(utf8 => 1);
+    return $json_codec->encode($data);
+  }
+
+  sub uri_for ($path) {
+    # Get base
   }
 }
 
