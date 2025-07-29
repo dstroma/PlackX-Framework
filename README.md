@@ -37,12 +37,12 @@ PlackX::Framework consists of the required modules:
 - PlackX::Framework::Response
 - PlackX::Framework::Router
 - PlackX::Framework::Router::Engine
+- PlackX::Framework::URIx
 
 And the following optional modules:
 
 - PlackX::Framework::Config
 - PlackX::Framework::Template
-- PlackX::Framework::URIx
 
 The statement "use PlackX::Framework" will automatically find and load all of
 the required modules. Then it will look for subclasses of the modules listed 
@@ -63,7 +63,7 @@ PlackX::Framework::Handler, ::Request, ::Response, and so on.
 
 ## Optional Components
 
-The Config, Template and URIx modules are included in the distribution, but
+The Config and Template modules are included in the distribution, but
 loading them is optional to save memory and compile time when not needed.
 Just as with the required modules, you can subclass them yourself, or you can
 have them automatically generated.
@@ -209,10 +209,10 @@ each request by the app() method of PlackX::Framework::Handler.
 
 ### PlackX::Framework::URIx
 
-The optional PlackX::Framework::URIx module is a subclass of URI::Fast, with
-some syntactic sugar for manipulating query string. It is made available to
+The PlackX::Framework::URIx module is a subclass of URI::Fast, with some
+syntactic sugar for manipulating query string. It is made available to your
 your request objects through $request->urix (the x is to not confuse it
-with the Plack::Request uri method).
+with the Plack::Request->uri() method).
 
 # Why Another Framework?
 
@@ -329,12 +329,12 @@ to \[ProjectName\]::Handler->to\_app.)
 - perl 5.36 or greater
 - Plack
 - Router::Boom
+- URI::Fast
 
 ## Optional
 
 - Config::Any
 - Template
-- URI::Fast
 
 # SEE ALSO
 

@@ -10,12 +10,6 @@ done_testing();
 
 sub do_tests {
 
-  my $uri_fast_available = eval { require URI::Fast; 1 };
-  unless ($uri_fast_available) {
-    say 'URI::Fast not available, skipping applicable tests';
-    return;
-  }
-
   my $class = 'PlackX::Framework::URIx';
   use_ok($class);
 

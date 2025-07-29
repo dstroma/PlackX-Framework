@@ -126,17 +126,14 @@ package PlackX::Framework::URIx {
 
 =head1 NAME
 
-PlackX::Framework::URIx - Subclass of URI::Fast with extra query string methods
+PlackX::Framework::URIx - Extended URI class.
 
 
 =head1 DESCRIPTION
 
 PlackX::Framework::URIx is part of PlackX::Framework. This module is a subclass
 of URI::Fast with extra features for manipulating query strings, namely setting,
-adding, or deleting parameters.
-
-If URI::Fast is not installed, this module can still be loaded, but any calls
-to new() will die.
+adding, or deleting parameters; and creating absolute URLs from relative ones.
 
 
 =head 2 Rationale
@@ -202,7 +199,12 @@ None.
 
 =head1 SEE ALSO
 
-URI::Fast
-URI
-URI::QueryParam
-Rose::URI
+=over 4
+
+=item URI::Fast
+
+=item URI
+
+=item URI::QueryParam
+
+=item Rose::URI

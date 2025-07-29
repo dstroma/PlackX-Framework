@@ -5,8 +5,8 @@ package PlackX::Framework 0.24 {
   use Digest::MD5 ();
 
   our @plugins = ();
-  sub required_modules { qw(Handler Request Response Router Router::Engine) }
-  sub optional_modules { qw(URIx Template Config), @plugins }
+  sub required_modules { qw(Handler Request Response Router Router::Engine URIx) }
+  sub optional_modules { qw(Config Template), @plugins }
 
   # Export ->app, load parent classes and load or create subclasses
   sub import (@options) {
@@ -117,6 +117,8 @@ PlackX::Framework consists of the required modules:
 
 =item PlackX::Framework::Router::Engine
 
+=item PlackX::Framework::URIx
+
 =back
 
 And the following optional modules:
@@ -126,8 +128,6 @@ And the following optional modules:
 =item PlackX::Framework::Config
 
 =item PlackX::Framework::Template
-
-=item PlackX::Framework::URIx
 
 =back
 
@@ -151,7 +151,7 @@ PlackX::Framework::Handler, ::Request, ::Response, and so on.
 
 =head2 Optional Components
 
-The Config, Template and URIx modules are included in the distribution, but
+The Config and Template modules are included in the distribution, but
 loading them is optional to save memory and compile time when not needed.
 Just as with the required modules, you can subclass them yourself, or you can
 have them automatically generated.
@@ -309,10 +309,10 @@ each request by the app() method of PlackX::Framework::Handler.
 
 =head3 PlackX::Framework::URIx
 
-The optional PlackX::Framework::URIx module is a subclass of URI::Fast, with
-some syntactic sugar for manipulating query string. It is made available to
+The PlackX::Framework::URIx module is a subclass of URI::Fast, with some
+syntactic sugar for manipulating query string. It is made available to your
 your request objects through $request->urix (the x is to not confuse it
-with the Plack::Request uri method).
+with the Plack::Request->uri() method).
 
 
 =head1 Why Another Framework?
@@ -446,6 +446,8 @@ to [ProjectName]::Handler->to_app.)
 
 =item Router::Boom
 
+=item URI::Fast
+
 =back
 
 
@@ -456,8 +458,6 @@ to [ProjectName]::Handler->to_app.)
 =item Config::Any
 
 =item Template
-
-=item URI::Fast
 
 =back
 

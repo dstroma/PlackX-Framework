@@ -44,8 +44,7 @@
          "recommends" : {
             "Config::Any" : "0",
             "JSON::MaybeXS" : "0",
-            "Template" : "0",
-            "URI::Fast" : "0"
+            "Template" : "0"
          },
          "requires" : {
             "Digest::MD5" : "0",
@@ -53,6 +52,7 @@
             "Module::Loaded" : "0",
             "Plack" : "0",
             "Router::Boom" : "0",
+            "URI::Fast" : "0",
             "perl" : "v5.36.0"
          }
       },
