@@ -58,10 +58,21 @@ sub do_tests {
   }
 
   {
-    my $uri = $class->new('http://www.schmoogle.com/search/more/page.html');
+    my $uri = $class->new('http://www.schmoogle.com/search/more/page.html?a=1&b=2&c=3');
+
+    ok(
+      $uri->goto('../')->isa('PlackX::Framework::URIx'),
+      'goto() returns PXF::URIx object'
+    );
+
     is($uri->goto('other.html') => 'http://www.schmoogle.com/search/more/other.html' => 'relative page goes to correct absolute url');
     is($uri->goto('/')          => 'http://www.schmoogle.com/'                       => '/ goes to root');
     is($uri->goto('./')         => 'http://www.schmoogle.com/search/more'            => './ goes to parent path');
     is($uri->goto('../')        => 'http://www.schmoogle.com/search'                 => '../ goes up a path');
+
+    is(
+      $uri->goto_with_query('other.html') => 'http://www.schmoogle.com/search/more/other.html?a=1&b=2&c=3',
+      'goto_with_query() preserves query string'
+    );
   }
 }

@@ -1,6 +1,7 @@
 use v5.36;
 package PlackX::Framework::URIx {
   use parent 'URI::Fast';
+  use URI ();
 
   sub new_from_request ($class, $requ) {
     # COPIED FROM PLACK::REQUEST
@@ -25,15 +26,19 @@ package PlackX::Framework::URIx {
     return $class->new($base . $path)->normalize;
   }
 
-  sub goto ($self, $rel_destination) {
-    my $rel = (ref $self)->new($rel_destination);
-    my $new = $rel->absolute($self);
-    return $new;
+
+  # The below line causes a buffer overflow on github!
+  # URI::Fast->new('other.html')->absolute('http://www.somewebsite.com/somedir/somewhere');
+  # So goto uses URI.pm instead of URI::Fast
+
+  sub goto ($self, $rel) {
+    die 'Object method called as class method' unless ref $self;
+    my $new = URI->new_abs("$rel", "$self");
+    return (ref $self)->new("$new");
   }
 
-  sub goto_with_query ($self, $rel_destination) {
-    my $rel = (ref $self)->new($rel_destination);
-    my $new = $rel->absolute($self);
+  sub goto_with_query ($self, $rel) {
+    my $new = $self->goto($rel);
     $new->query(scalar $self->query);
     return $new;
   }
