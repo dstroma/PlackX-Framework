@@ -4,38 +4,32 @@ package PlackX::Framework::Request {
   use Carp qw(croak);
 
   use Plack::Util::Accessor qw(stash route_parameters);
-  sub GlobalRequest ($class) { ($class->app_namespace.'::Handler')->global_request }
-  sub max_reroutes           { 16 }
-  sub is_get        ($self)  { uc $self->method eq 'GET'    }
-  sub is_post       ($self)  { uc $self->method eq 'POST'   }
-  sub is_put        ($self)  { uc $self->method eq 'PUT'    }
-  sub is_delete     ($self)  { uc $self->method eq 'DELETE' }
-  sub is_ajax       ($self)  { uc($self->header('X-Requested-With') || '') eq 'XMLHTTPREQUEST' }
-  sub destination   ($self)  { $self->{destination} // $self->path_info   }
-  sub flash         ($self)  { $self->cookies->{$self->flash_cookie_name} }
+  sub GlobalRequest    ($class) { ($class->app_namespace.'::Handler')->global_request }
+  sub max_reroutes              { 16 }
+  sub is_get            ($self) { uc $self->method eq 'GET'    }
+  sub is_post           ($self) { uc $self->method eq 'POST'   }
+  sub is_put            ($self) { uc $self->method eq 'PUT'    }
+  sub is_delete         ($self) { uc $self->method eq 'DELETE' }
+  sub is_ajax           ($self) { uc($self->header('X-Requested-With') || '') eq 'XMLHTTPREQUEST' }
+  sub destination       ($self) { $self->{destination} // $self->path_info   }
+  sub flash             ($self) { $self->cookies->{$self->flash_cookie_name} }
   sub flash_cookie_name ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace) }
   sub param       ($self, $key) { scalar $self->parameters->{$key} } # faster than scalar $self->param($key)
   sub cgi_param   ($self, $key) { $self->SUPER::param($key)        } # CGI.pm compatibile
   sub route_param ($self, $key) { $self->{route_parameters}{$key}  }
   sub stash_param ($self, $key) { $self->{stash}{$key}             }
   sub uri_to      ($self, $uri) { $self->urix->to($uri)            }
+  sub urix              ($self) { ($self->app_namespace.'::URIx')->new($self) }
 
   sub reroute ($self, $dest) {
-    my $routelist = $self->{reroutes} //= [$self->path_info];
-    push @$routelist, ($self->{destination} = $dest);
-    croak "Excessive reroutes:\n" . join("\n", @$routelist) if @$routelist > $self->max_reroutes;
-    return $self;
-  }
+    $self->{destination} = $dest;
+    $self->{reroutes}  //= [$self->path_info];
+    push @{$self->{reroutes}}, $dest;
 
-  sub urix ($self) {
-    # The URI module is optional, so only load it on demand
-    require PlackX::Framework::URIx;
-    my $obj = eval {
-      ($self->app_namespace.'::URIx')->new_from_request($self)
-    } || eval {
-      PlackX::Framework::URIx->new_from_request($self)
-    };
-    return $obj;
+    croak "Excessive reroutes:\n" . join("\n", $self->{reroutes}->@*)
+      if $self->{reroutes}->@* > $self->max_reroutes;
+
+    return $self;
   }
 }
 

@@ -2,10 +2,18 @@ use v5.36;
 package PlackX::Framework::URIx {
   use parent 'URI::Fast';
   use URI ();
+  use Scalar::Util qw(blessed);
 
-  sub new_from_request ($class, $requ) {
-    # COPIED FROM PLACK::REQUEST
+  sub new ($class, $arg) {
+    return $class->new_from_pxf_request($arg)
+      if blessed $arg and $arg->isa('PlackX::Framework::Request');
+    return $class->SUPER::new($arg);
+  }
+
+  sub new_from_pxf_request ($class, $requ) {
+    # COPIED FROM PLACK::REQUEST AND MODIFIED FOR PLACKX::FRAMEWORK
     my $base = $requ->_uri_base;
+    my $path_info = $requ->destination; # equivalent to PATH_INFO
 
     # We have to escape back PATH_INFO in case they include stuff like
     # ? or # so that the URI parser won't be tricked. However we should
@@ -17,19 +25,24 @@ package PlackX::Framework::URIx {
     # See RFC 3986 before modifying.
     my $path_escape_class = q{^/;:@&=A-Za-z0-9\$_.+!*'(),-};
 
-    my $path = URI::Escape::uri_escape($requ->env->{PATH_INFO} || '', $path_escape_class);
+    my $path = URI::Escape::uri_escape($path_info || '', $path_escape_class);
     $path .= '?' . $requ->env->{QUERY_STRING}
         if defined $requ->env->{QUERY_STRING} && $requ->env->{QUERY_STRING} ne '';
 
     $base =~ s!/$!! if $path =~ m!^/!;
 
-    return $class->new($base . $path)->normalize;
+    return $class->SUPER::new($base . $path)->normalize;
   }
 
 
   # The below line causes a buffer overflow on github!
   # URI::Fast->new('other.html')->absolute('http://www.somewebsite.com/somedir/somewhere');
-  # So goto uses URI.pm instead of URI::Fast
+  # So to() uses URI.pm instead of URI::Fast
+  # Continue to use URI::Fast elsewhere, because
+  #  - it is faster
+  #  - it has more methods for query string manipulation than URI.pm
+  #  - URI.pm is a pain to subclass, returning objects blessed into different
+  #    classes depending on the argument
 
   sub to ($self, $rel) {
     die 'Object method called as class method' unless ref $self;

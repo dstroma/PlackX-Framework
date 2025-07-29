@@ -33,7 +33,7 @@ package MyApp::Controllers {
 
   route '/admin' => sub ($request, $response) {
     $response->print('You should not be here! This is impossible!');
-    return;
+    return $response;
   }
 
 }
