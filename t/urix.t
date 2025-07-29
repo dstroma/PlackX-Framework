@@ -59,10 +59,9 @@ sub do_tests {
 
   {
     my $uri = $class->new('http://www.schmoogle.com/search/more/page.html');
-    my $rel = $uri->pxf_goto('other.html');
-    #is($uri->relative('other.html') => 'http://www.schmoogle.com/search/more/other.html' => 'relative page goes to correct absolute url');
-  #  is($uri->goto('/')          => 'http://www.schmoogle.com/'                       => '/ goes to root');
-  #  is($uri->goto('./')         => 'http://www.schmoogle.com/search/more'            => './ goes to parent path');
-  #  is($uri->goto('../')        => 'http://www.schmoogle.com/search'                 => '../ goes up a path');
+    is($uri->goto('other.html') => 'http://www.schmoogle.com/search/more/other.html' => 'relative page goes to correct absolute url');
+    is($uri->goto('/')          => 'http://www.schmoogle.com/'                       => '/ goes to root');
+    is($uri->goto('./')         => 'http://www.schmoogle.com/search/more'            => './ goes to parent path');
+    is($uri->goto('../')        => 'http://www.schmoogle.com/search'                 => '../ goes up a path');
   }
 }
