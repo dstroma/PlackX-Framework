@@ -35,7 +35,6 @@ package PlackX::Framework::Request {
     } || eval {
       PlackX::Framework::URIx->new_from_request($self)
     };
-    warn "urix called, got object $obj, which is instance of " . ref $obj;
     return $obj;
   }
 }
