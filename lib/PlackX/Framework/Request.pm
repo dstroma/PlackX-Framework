@@ -18,6 +18,7 @@ package PlackX::Framework::Request {
   sub cgi_param   ($self, $key) { $self->SUPER::param($key)        } # CGI.pm compatibile
   sub route_param ($self, $key) { $self->{route_parameters}{$key}  }
   sub stash_param ($self, $key) { $self->{stash}{$key}             }
+  sub uri_to      ($self, $uri) { $self->urix->to($uri)            }
 
   sub reroute ($self, $dest) {
     my $routelist = $self->{reroutes} //= [$self->path_info];

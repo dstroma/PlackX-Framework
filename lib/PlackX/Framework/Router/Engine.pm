@@ -13,23 +13,28 @@ package PlackX::Framework::Router::Engine {
 
     # Prefix with [ method ] to include in match
     my $destination = sprintf('/[ %s ]%s', $request->method, $request->destination);
-    my ($match, $captures) = $self->SUPER::match($destination)
+    my @match_array = $self->SUPER::match($destination)
       or return undef;
 
-    delete $captures->{PXF_REQUEST_METHOD}; # delete because internal use only
-    $match->{route_parameters} = $captures;
+    # Note Router::Boom can return the same references multiple times, so copy
+    # This caused some very strange bugs in development!
+    my %match    = $match_array[0]->%*;
+    my %captures = $match_array[1]->%*;
+
+    delete $captures{PXF_REQUEST_METHOD}; # it was for internal use only
+    $match{route_parameters} = \%captures;
 
     # Add global filters (the match already has local filters in it)
     for my $filter_type (qw/prefilters postfilters/) {
       if (my $filters = $self->_match_global_filters($filter_type, $request)) {
-        $match->{$filter_type} ||= [];
+        $match{$filter_type} ||= [];
         # put global prefilters before local and global postfilters after local
-        unshift @{$match->{$filter_type}}, @$filters if $filter_type eq 'prefilters';
-        push    @{$match->{$filter_type}}, @$filters if $filter_type eq 'postfilters';
+        unshift @{$match{$filter_type}}, @$filters if $filter_type eq 'prefilters';
+        push    @{$match{$filter_type}}, @$filters if $filter_type eq 'postfilters';
       }
     }
 
-    return $match;
+    return \%match;
   }
 
   sub _match_global_filters ($self, $kind, $request) {
@@ -99,7 +104,7 @@ package PlackX::Framework::Router::Engine {
   }
 
   sub _path_with_method ($path, $method = undef) {
-    # $method can verb or verbs separated with pipe (e.g. 'get|post'), or undef
+    # $method is verb or verbs separated with pipe (e.g. 'get|post'), or undef
     # A real request uri should never have [] or spaces in it, so use those to
     # separate the method from the remaining uri. Thankfully Router::Boom does
     # not check uris for validity, otherwise this would not work.

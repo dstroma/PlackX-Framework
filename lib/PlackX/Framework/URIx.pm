@@ -31,14 +31,14 @@ package PlackX::Framework::URIx {
   # URI::Fast->new('other.html')->absolute('http://www.somewebsite.com/somedir/somewhere');
   # So goto uses URI.pm instead of URI::Fast
 
-  sub goto ($self, $rel) {
+  sub to ($self, $rel) {
     die 'Object method called as class method' unless ref $self;
     my $new = URI->new_abs("$rel", "$self");
     return (ref $self)->new("$new");
   }
 
-  sub goto_with_query ($self, $rel) {
-    my $new = $self->goto($rel);
+  sub to_with_query ($self, $rel) {
+    my $new = $self->to($rel);
     $new->query(scalar $self->query);
     return $new;
   }

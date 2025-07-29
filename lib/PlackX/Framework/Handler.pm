@@ -61,7 +61,8 @@ package PlackX::Framework::Handler {
         $template->set(STASH => $stash, REQUEST => $request, RESPONSE => $response);
         $response->template($template);
       } or do {
-        warn "Unable to set up template: $@";
+        warn "$app_namespace\::Template module is loaded, but unable to set up template: $@"
+           . "\t(Hint: Did you import from $app_namespace\::Template or set up templating manually?)\n";
       };
     }
 
