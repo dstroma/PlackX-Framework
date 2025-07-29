@@ -27,8 +27,8 @@ package PlackX::Framework::URIx {
 
   sub relative ($self, $rel_destination) {
     die 'Object method called as class method' unless ref $self;
-    my $rel = URI::Fast->new("$rel_destination");
-    my $new = $rel->absolute("$self");
+    my $rel = URI::Fast->new('other.html');
+    my $new = $rel->absolute('http://www.somewebsite.com/somedir/somewhere');
     #return $new;
   }
 
