@@ -1,0 +1,13 @@
+[% WRAPPER 'layout.html' %]
+		<div class="main">
+			<h1>PlackX::Framework Example: [% page_name %]</h1>
+			<p>
+				This is an example PlackX::Framework application.
+				There is an example form at the bottom of the page.
+			</p>
+		</div>
+		<div class="footer">
+			What do you think?
+			<a href="[% REQUEST.uri_to('./feedback') %]">Click here</a> to submit feedback.
+		</div>
+[% END %]
