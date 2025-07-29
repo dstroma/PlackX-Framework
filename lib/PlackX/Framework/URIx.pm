@@ -25,14 +25,14 @@ package PlackX::Framework::URIx {
     return $class->new($base . $path)->normalize;
   }
 
-  sub relative ($self, $rel_destination) {
+  sub pxf_goto ($self, $rel_destination) {
     die 'Object method called as class method' unless ref $self;
     my $rel = URI::Fast->new('other.html');
     my $new = $rel->absolute('http://www.somewebsite.com/somedir/somewhere');
     #return $new;
   }
 
-  sub relative_with_query ($self, $rel_destination) {
+  sub pxf_goto_with_query ($self, $rel_destination) {
     die 'Object method called as class method' unless ref $self;
     my $rel = (ref $self)->new("$rel_destination");
     #my $new = $rel->absolute("$self");
