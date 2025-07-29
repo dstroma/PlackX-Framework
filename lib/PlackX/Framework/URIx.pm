@@ -27,8 +27,7 @@ package PlackX::Framework::URIx {
 
   sub pxf_goto ($self, $rel_destination) {
     die 'Object method called as class method' unless ref $self;
-    my $rel = URI::Fast->new('other.html');
-    my $new = $rel->absolute('http://www.somewebsite.com/somedir/somewhere');
+    URI::Fast->new('other.html')->absolute('http://www.somewebsite.com/somedir/somewhere');
     #return $new;
   }
 
