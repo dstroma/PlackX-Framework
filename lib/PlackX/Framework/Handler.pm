@@ -7,10 +7,10 @@ package PlackX::Framework::Handler {
   # Overridable options
   my %globals;
   sub use_global_request_response    { } # Override in subclass to turn on
-  sub global_request     ($class)    { $globals{$class->app_namespace}->[0]                  }
-  sub global_response    ($class)    { $globals{$class->app_namespace}->[1]                  }
-  sub finalized_response             { ref $_[-1] eq 'ARRAY' ? $_[-1] : $_[-1]->finalize     }
-  sub error_response ($class, $code) { [$code, [], [status_message($code)." (Error $code)"]] }
+  sub global_request        ($class) { $globals{$class->app_namespace}->[0]            }
+  sub global_response       ($class) { $globals{$class->app_namespace}->[1]            }
+  sub psgi_response          ($resp) { ref $resp eq 'ARRAY' ? $resp : $resp->finalize  }
+  sub error_response ($class, $code) { [$code, [], [status_message($code)." ($code)"]] }
 
   # Public class methods
   sub to_app ($class, %options)  {
@@ -18,15 +18,15 @@ package PlackX::Framework::Handler {
     my $static_docroot     = delete $options{'static_docroot'};
     die "Unknown options: " . join(', ', keys %options) if %options;
 
-    return sub ($env) { finalized_response($class->handle_request($env)) }
+    return sub ($env) { psgi_response($class->handle_request($env)) }
       unless $serve_static_files;
 
     require Plack::App::File;
     my $file_app = Plack::App::File->new(root => $static_docroot)->to_app;
     return sub ($env) {
-      my $app_response  = finalized_response($class->handle_request($env));
+      my $app_response  = psgi_response($class->handle_request($env));
       return $app_response if ref $app_response and $app_response->[0] != 404;
-      my $file_response = finalized_response($file_app->($env));
+      my $file_response = psgi_response($file_app->($env));
       return $file_response;
     };
   }
@@ -78,7 +78,7 @@ package PlackX::Framework::Handler {
       # Execute global and route-specific prefilters
       if (my $filterset = $match->{prefilters}) {
         my $ret = execute_filters($filterset, $request, $response);
-        return finalized_response($ret) if $ret and is_valid_response($ret);
+        return $ret if $ret and is_valid_response($ret);
       }
 
       # Execute main action
@@ -96,7 +96,7 @@ package PlackX::Framework::Handler {
       # Execute postfilters
       if (my $filterset = $match->{postfilters}) {
         my $ret = execute_filters($filterset, $request, $response);
-        return finalized_response($ret) if $ret and is_valid_response($ret);
+        return $ret if $ret and is_valid_response($ret);
       }
 
       # Clean up (does server support cleanup handlers? Add to list or else execute now)
@@ -108,7 +108,7 @@ package PlackX::Framework::Handler {
         }
       }
 
-      return finalized_response($response) if is_valid_response($response);
+      return $response if is_valid_response($response);
     }
 
     return $class->error_response(404);
