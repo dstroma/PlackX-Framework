@@ -2,14 +2,15 @@ use v5.36;
 package PlackX::Framework::Handler {
   use Scalar::Util qw(blessed);
   use Module::Loaded qw(is_loaded);
+  use HTTP::Status qw(status_message);
 
   # Overridable options
   my %globals;
-  sub use_global_request_response { } # Override in subclass to turn on
-  sub global_request     ($class) { $globals{$class->app_namespace}->[0] }
-  sub global_response    ($class) { $globals{$class->app_namespace}->[1] }
-  sub not_found_response          { [404, [], ['Not Found']]                 }
-  sub error_response              { [500, [], ['Internal Server Error']]     }
+  sub use_global_request_response    { } # Override in subclass to turn on
+  sub global_request     ($class)    { $globals{$class->app_namespace}->[0]                  }
+  sub global_response    ($class)    { $globals{$class->app_namespace}->[1]                  }
+  sub finalized_response             { ref $_[-1] eq 'ARRAY' ? $_[-1] : $_[-1]->finalize     }
+  sub error_response ($class, $code) { [$code, [], [status_message($code)." (Error $code)"]] }
 
   # Public class methods
   sub to_app ($class, %options)  {
@@ -17,22 +18,17 @@ package PlackX::Framework::Handler {
     my $static_docroot     = delete $options{'static_docroot'};
     die "Unknown options: " . join(', ', keys %options) if %options;
 
-    if ($serve_static_files) {
-      require Plack::App::File;
-      my $static_app = Plack::App::File->new(root => $static_docroot)->to_app;
-      return sub ($env) {
-        # Note: If both are 404, prefer to serve app's 404 rather than Plack::App::File's
-        my $apps_resp = $class->handle_request($env);
-        return $apps_resp if ref $apps_resp and $apps_resp->[0] != 404;
-        my $file_resp = $static_app->($env);
-        return $file_resp if ref $file_resp and $file_resp->[0] != 404;
-        return $apps_resp;
-      };
-    } else {
-      return sub ($env) {
-        return $class->handle_request($env);
-      };
-    }
+    return sub ($env) { finalized_response($class->handle_request($env)) }
+      unless $serve_static_files;
+
+    require Plack::App::File;
+    my $file_app = Plack::App::File->new(root => $static_docroot)->to_app;
+    return sub ($env) {
+      my $app_response  = finalized_response($class->handle_request($env));
+      return $app_response if ref $app_response and $app_response->[0] != 404;
+      my $file_response = finalized_response($file_app->($env));
+      return $file_response;
+    };
   }
 
   sub handle_request ($class, $env_or_req, $maybe_resp = undef) {
@@ -51,8 +47,6 @@ package PlackX::Framework::Handler {
     my $stash = ($request->stash or $response->stash or {});
     $request->stash($stash);
     $response->stash($stash);
-    $stash->{REQUEST}  = $request;
-    $stash->{RESPONSE} = $response;
 
     # Maybe set up Templating, if loaded
     if (is_loaded($app_namespace . '::Template')) {
@@ -91,7 +85,7 @@ package PlackX::Framework::Handler {
       my $result = $match->{action}->($request, $response);
       unless ($result and ref $result) {
         warn "PlackX::Framework - Invalid result '$result'\n";
-        return $class->error_response;
+        return $class->error_response(500);
       }
 
       # Check if the result is actually another request object
@@ -117,7 +111,7 @@ package PlackX::Framework::Handler {
       return finalized_response($response) if is_valid_response($response);
     }
 
-    return $class->not_found_response;
+    return $class->error_response(404);
   }
 
   # Helpers ###################################################################
@@ -151,11 +145,6 @@ package PlackX::Framework::Handler {
     return 1 if ref $response eq 'ARRAY' and @$response == 3;     # Good - PSGI raw response arrayref
     return 1 if blessed $response and $response->can('finalize'); # Good - Plack-like response object with finalize() method
     return undef;
-  }
-
-  sub finalized_response {
-    my $response = pop;
-    return ref $response eq 'ARRAY' ? $response : $response->finalize;
   }
 
   sub env_or_req_to_req ($class, $env_or_req) {

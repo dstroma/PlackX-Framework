@@ -10,10 +10,10 @@ package PlackX::Framework 0.24 {
 
   # Export ->app, load parent classes and load or create subclasses
   sub import (@options) {
-    my %required   = map { $_ => 1 } required_modules(); # not memoized to save ram
-    my $all_wanted = any { $_ =~ m/^[:+]all$/ } @options;
-    my $mod_wanted = $all_wanted ? sub {1} : sub { any { $_ =~ m/^[:+]{0,2}$_[0]$/i } @options };
-    my $caller     = caller(0);
+    my %required = map { $_ => 1 } required_modules(); # not memoized to save ram
+    my $want_all = any { $_ =~ m/^[:+]all$/ } @options;
+    my $want_mod = ($want_all or sub { any { $_ =~ m/^[:+]{0,2}$_[0]$/i } @options });
+    my $caller   = caller(0);
     export_app_sub($caller);
 
     # Load or create required modules, attempt to load optional ones
@@ -24,7 +24,7 @@ package PlackX::Framework 0.24 {
       eval 'require '.$caller.'::'.$module or do {
         die $@ if module_is_broken($caller.'::'.$module);
         generate_subclass($caller.'::'.$module, 'PlackX::Framework::'.$module)
-          if $required{$module} or $all_wanted or $mod_wanted->($module);
+          if $required{$module} or $want_all or $want_mod->($module);
       };
       export_app_namespace_sub($caller, $module)
         if Module::Loaded::is_loaded($caller.'::'.$module);
