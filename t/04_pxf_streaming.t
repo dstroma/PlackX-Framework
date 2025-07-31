@@ -19,9 +19,18 @@ sub do_tests {
         use My::Test::App::Router;
         route '/streaming-test' => sub ($request, $response) {
           die "Server does not support streaming"
-            unless $request->env->{'psgi.streaming'};
+            if !$request->env->{'psgi.streaming'} and !$request->env->{'test.streaming.off'};
+
+          # Print some lines without streaming to make sure everything is
+          # sent in the correct order
           $response->print(shift @content);
           $response->print(shift @content);
+
+          # Check to make sure there is still some content left to stream
+          die 'Need at least two more lines for proper streaming test'
+            unless @content >= 2;
+
+          # Stream remaining content
           return $response->render_stream(sub {
             do { $response->print($_); sleep 1 } for @content;
             sleep 1;
@@ -38,27 +47,62 @@ sub do_tests {
     'Test app is an app'
   );
 
-  my $port = 40_000 + int(rand() * 20_000);
-  my $server = run_server(port => $port, app => My::Test::App->app);
+  # Timed streaming test
+  {
+    my $port = 40_000 + int(rand() * 20_000);
+    my $server = run_server(port => $port, app => My::Test::App->app);
 
-  sleep 1;
-  my $data = run_client(path => '/streaming-test', %$server);
-  stop_server($server);
+    sleep 1;
+    my $data = run_client(path => '/streaming-test', %$server);
+    stop_server($server);
 
-  my @body_data = grep { $_->{line} =~ m/^Content-Line/ } @$data;
-  my $body_text = join('', map { $_->{line} } @body_data);
-  is(
-    $body_text => join('', @content),
-    'Server response is correct content'
-  );
+    my @body_data = grep { $_->{line} =~ m/^Content-Line/ } @$data;
+    my $body_text = join('', map { $_->{line} } @body_data);
+    is(
+      $body_text => join('', @content),
+      'Server response is correct content'
+    );
 
-  my $t_2 = $body_data[-1]->{time};
-  my $t_1 = $body_data[-2]->{time};
-  my $elapsed = $t_2 - $t_1;
-  ok(
-    ($elapsed > 0.8 and $elapsed < 1.2),
-    "Last body content lines received 1s +/- 0.2s apart (actual: $elapsed)"
-  );
+    my $t_2 = $body_data[-1]->{time};
+    my $t_1 = $body_data[-2]->{time};
+    my $elapsed = $t_2 - $t_1;
+    ok(
+      ($elapsed > 0.8 and $elapsed < 1.2),
+      "Last body content lines received 1s +/- 0.2s apart (actual: ${elapsed}s)"
+    );
+  }
+
+  # Turn off streaming, response should be sent all at once
+  {
+    my $app_no_streaming = sub ($env) {
+      $env->{'psgi.streaming'}     = !!0;
+      $env->{'test.streaming.off'} = !!1;
+      My::Test::App->app->($env);
+    };
+
+    my $port = 40_000 + int(rand() * 20_000);
+    my $server = run_server(port => $port, app => $app_no_streaming);
+
+    sleep 1;
+    my $data = run_client(path => '/streaming-test', %$server);
+    stop_server($server);
+
+    my @body_data = grep { $_->{line} =~ m/^Content-Line/ } @$data;
+    my $body_text = join('', map { $_->{line} } @body_data);
+    is(
+      $body_text => join('', @content),
+      'Streaming off: server response is correct content'
+    );
+
+    my $t_2 = $body_data[-1]->{time};
+    my $t_1 = $body_data[-2]->{time};
+    my $elapsed_ms = 1000 * ($t_2 - $t_1);
+    ok(
+      ($elapsed_ms < 1),
+      "Streaming off: minimal (< 1ms) delay between body lines (actual: ${elapsed_ms}ms)"
+    );
+  }
+
 }
 
 sub run_server (%options) {
