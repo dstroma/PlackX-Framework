@@ -2,23 +2,45 @@ use v5.36;
 package PlackX::Framework::Response {
   use parent 'Plack::Response';
 
-  use Plack::Util::Accessor qw(stash cleanup_callbacks template);
+  use Plack::Util::Accessor qw(stash cleanup_callbacks template stream stream_writer);
   sub GlobalResponse ($class)            { ($class->app_namespace.'::Handler')->global_response }
   sub continue                           { undef      }
   sub stop                               { $_[0] || 1 }
-  sub print ($self, @lines)              { push @{$self->{body}}, @lines; $self     }
   sub add_cleanup_callback ($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
   sub flash_cookie_name ($self)          { PlackX::Framework::flash_cookie_name($self->app_namespace) }
   sub render_json         ($self, $data) { $self->render_content('application/json', encode_json($data)) }
   sub render_text         ($self, $text) { $self->render_content('text/plain',       $text             ) }
   sub render_html         ($self, $html) { $self->render_content('text/html',        $html             ) }
+  sub render_stream       ($self, $code) { $self->stream($code); $self                                   }
   sub render_template     ($self, @args) { $self->{template}->render(@args); $self                       }
+  sub finalize                   ($self) { $self->stream ? $self->finalize_s : $self->SUPER::finalize    }
 
   sub new ($class, @args) {
     my $self = $class->SUPER::new(@args);
     $self->{cleanup_callbacks} //= [];
     $self->{body}              //= [];
     return bless $self, $class;
+  }
+
+  sub finalize_s ($self) {
+    # Finalize for streaming
+    my $original_body = $self->body;
+    $self->body(undef);
+    my $aref = $self->SUPER::finalize;
+    $self->body($original_body);
+    pop @$aref;
+    return $aref;
+  }
+
+  sub print ($self, @lines) {
+    if ($self->stream_writer) {
+      unshift @lines, @{$self->{body}} and $self->{body} = undef
+        if $self->body;
+      $self->stream_writer->write($_) for @lines; # write() does not take a list!
+      return $self;
+    }
+    push @{$self->{body}}, @lines;
+    return $self;
   }
 
   sub redirect ($self, @args) {
@@ -154,7 +176,28 @@ If passed a false value, sets these headers to empty string.
 
 =item print($string), print(@strings)
 
-Adds $string or @strings to the response body.
+Adds $string or @strings to the response body, or write them to the PSGI
+output stream if streaming mode has been activated (see the render_stream()
+and stream() methods below).
+
+When streaming is activated, you should append your print strings with newlines
+to encourage the server (and browser) to flush the buffer.
+
+Unfortunately, the PSGI specification does not provide a way to flush the
+buffer, but if you are using a server that allows this, perhaps you could do:
+
+    $response->print($string);
+    $response->stream_writer->flush_buffer();
+
+Or override print in your subclass:
+
+    package MyApp::Response {
+      use parent 'PlackX::Framework::Response';
+      sub print ($self, @lines) {
+        $self->SUPER::print(@lines);
+        $self->stream_writer->flush_buffer() if $self->stream_writer;
+      }
+    }
 
 =item render_html($string)
 
@@ -164,6 +207,21 @@ Sets the content-type to text/html and sets the response body to $string.
 
 Sets the content-type to application/json and encodes $ref to JSON, setting
 the response body to the resulting string.
+
+=item render_stream(CODE)
+
+Call stream() with CODE and return the response object.
+
+Example:
+
+    route '/stream-example' => sub ($request, $response) {
+      $response->print(...); # html header
+      return $response->render_stream(sub {
+        # Do some slow actions
+        $response->print(...);
+        # Do more slow actions
+      });
+    };
 
 =item render_template(@args)
 
@@ -176,6 +234,25 @@ Sets the content-type to text/plain and sets the response body to $string.
 =item stash(), stash($hashref)
 
 Returns the current stash hashref, optionally setting it to a new one.
+
+=item stream(CODE)
+
+Get or set a code reference for PSGI streaming. It is recommended you simply
+return render_stream(CODE) as described above, but you can use this directly
+like the below example.
+
+
+Example:
+
+    route '/stream-example' => sub ($request, $response) {
+      $response->stream(sub {
+        $response->print('I am in a stream!');
+      });
+      # Anything you do here will be executed BEFORE the stream code!
+      $response->print('I am before the stream!');
+      return $response;
+    };
+
 
 =item stop()
 

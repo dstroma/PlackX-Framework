@@ -6,10 +6,10 @@ package PlackX::Framework::Handler {
 
   # Overridable options
   my %globals;
+  my $streaming_support;
   sub use_global_request_response    { } # Override in subclass to turn on
   sub global_request        ($class) { $globals{$class->app_namespace}->[0]            }
   sub global_response       ($class) { $globals{$class->app_namespace}->[1]            }
-  sub psgi_response          ($resp) { ref $resp eq 'ARRAY' ? $resp : $resp->finalize  }
   sub error_response ($class, $code) { [$code, [], [status_message($code)." ($code)"]] }
 
   # Public class methods
@@ -32,7 +32,7 @@ package PlackX::Framework::Handler {
   }
 
   sub handle_request ($class, $env_or_req, $maybe_resp = undef) {
-    my $app_namespace = $class->app_namespace;
+    my $app_namespace  = $class->app_namespace;
 
     # Get or create request and response objects
     my $env      = $class->env_or_req_to_env($env_or_req);
@@ -40,6 +40,9 @@ package PlackX::Framework::Handler {
     my $response = $maybe_resp || ($app_namespace . '::Response')->new(200);
 
     # Maybe set globals
+    $streaming_support = $env->{'psgi.streaming'} ? !!1 : !!0
+      if !defined $streaming_support;
+
     $globals{$app_namespace} = [$request, $response]
       if $class->use_global_request_response;
 
@@ -141,10 +144,33 @@ package PlackX::Framework::Handler {
 
   sub is_valid_response {
     my $response = pop;
-    return undef unless defined $response and ref $response;      # Bad  - must be defined and be a ref
-    return 1 if ref $response eq 'ARRAY' and @$response == 3;     # Good - PSGI raw response arrayref
-    return 1 if blessed $response and $response->can('finalize'); # Good - Plack-like response object with finalize() method
-    return undef;
+    return !!0 unless defined $response and ref $response;
+    return !!1 if ref $response eq 'ARRAY' and (@$response == 3 or @$response == 2);
+    return !!1 if blessed $response and $response->can('finalize');
+    return !!0;
+  }
+
+  sub psgi_response ($resp) {
+    return $resp
+      if !blessed $resp;
+
+    return $resp->finalize
+      if not $resp->can('stream') or not $resp->stream;
+
+    return sub ($PSGI_responder) {
+      my $PSGI_writer = $PSGI_responder->($resp->finalize_s);
+      $resp->stream_writer($PSGI_writer);
+      $resp->stream->();
+      $PSGI_writer->close;
+    } if $streaming_support;
+
+    # Simulate streaming
+    # "do" to make it look consistent with the above stanzas
+    return do {
+      $resp->stream->();
+      $resp->stream(undef);
+      $resp->finalize;
+    };
   }
 
   sub env_or_req_to_req ($class, $env_or_req) {
