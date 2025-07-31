@@ -4,7 +4,6 @@ use v5.36;
 package StreamingApp {
   use PlackX::Framework;
   use StreamingApp::Router;
-  use Data::Dumper;
   route '/stream-example' => sub ($request, $response) {
     # This part is not streaming
     $response->print("<html><head></head><body>\n");
@@ -20,11 +19,11 @@ package StreamingApp {
       # Calling other methods on the $response object will not make sense
       # PXF will emulate PSGI streaming if it is not available.
       for my $i (0..10) {
-        $response->print("Hello $i<br>\n\n");
+        $response->print("Hello $i<br>\n");
         # Simulate a slow response with sleep
         sleep 1;
       }
-      $response->print("</body></html>\r\n");
+      $response->print("</body></html>\n");
     });
   };
 }
@@ -33,14 +32,15 @@ StreamingApp->app;
 
 =pod
 
-This is what a similar streaming app would look like with straight PSGI:
+This is what a similar streaming app would look like with straight PSGI
+(minus the html above):
 
     my $app = sub {
         my $env = shift;
         return sub {
             my $responder = shift;
             my $writer    = $responder->([200, ['Content-Type' => 'text/html']]);
-            $writer->write("I am about to stream!\n");
+            $writer->write("I am about to stream...\n");
             for my $i (0..10) {
               $writer->write("Hello $i\n");
               sleep 1;
