@@ -8,8 +8,6 @@ done_testing();
 #######################################################################
 
 sub do_tests {
-  use Plack::LWPish;
-  use HTTP::Request;
   use constant BODY_LINES => 5;
 
   my @content = map { "Content-Line-$_:" . int(rand(10_000)) . "\n" } 1..BODY_LINES;
