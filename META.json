@@ -51,7 +51,9 @@
             "List::Util" : "0",
             "Module::Loaded" : "0",
             "Plack" : "0",
+            "Role::Tiny" : "0",
             "Router::Boom" : "0",
+            "Scalar::Util" : "0",
             "URI::Fast" : "0",
             "perl" : "v5.36.0"
          }

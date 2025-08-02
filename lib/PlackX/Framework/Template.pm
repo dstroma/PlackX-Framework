@@ -2,6 +2,18 @@ use v5.36;
 package PlackX::Framework::Template {
   my %engine_objects = ();
 
+  sub engine_class {
+    # Use Template Toolkit (Template.pm) by default
+    # If defining your own engine it should implement the role from
+    # PlackX::Framework::Role::TemplateEngine
+    'Template';
+  }
+
+  sub engine_default_options {
+    # Specify options for the template engine if none are defined
+    { INCLUDE_PATH => ['template', 'templates'] };
+  }
+
   sub import ($class, $options = undef) {
     die "Import from your app's subclass of PlackX::Framework::Template, not directly"
       if $class eq __PACKAGE__;
@@ -12,23 +24,22 @@ package PlackX::Framework::Template {
 
     # Setup Template Toolkit if available
     # Options can be passed in import statement or in config file
-    require Template;
+    eval 'require ' . $class->engine_class
+      or die "Cannot load module " . $class->engine_class . ", $@";
+
     unless ($options) {
       $options = eval {
         my $config = $class->app_namespace->config();
         return $config->{pxf}{template} if $config->{pxf}{template};
         return $config->{pxf_template}  if $config->{pxf_template};
+        return $class->engine_default_options;
         return undef;
       };
     }
 
-    # Set up some sane defaults if necessary
-    $options = {} unless $options;
-    $options->{'INCLUDE_PATH'} //= ['template', 'templates'];
-
     # Create and remember the Template-Toolkit object to be used
-    my $template_toolkit_obj = Template->new($options);
-    $class->set_engine($template_toolkit_obj);
+    my $template_engine_object = $class->engine_class->new($options);
+    $class->set_engine($template_engine_object);
   }
 
   sub new ($class, $response, $engine = undef) {

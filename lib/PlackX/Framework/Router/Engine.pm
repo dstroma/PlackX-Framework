@@ -2,6 +2,9 @@ use v5.36;
 package PlackX::Framework::Router::Engine {
   use parent 'Router::Boom';
 
+  use Role::Tiny::With;
+  with 'PlackX::Framework::Role::RouterEngine';
+
   # We use a Hybrid Singleton (one instance per subclass)
   sub new      ($class) { $class->instance; }
   sub instance ($class) { state %instances; $instances{$class} ||= $class->SUPER::new }
