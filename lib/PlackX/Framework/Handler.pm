@@ -6,7 +6,7 @@ package PlackX::Framework::Handler {
 
   # Overridable options
   my %globals;
-  my $streaming_support;
+  our $psgix_streaming; # memoize, but use an "our" var so Tests can change it
   sub use_global_request_response    { } # Override in subclass to turn on
   sub global_request        ($class) { $globals{$class->app_namespace}->[0]            }
   sub global_response       ($class) { $globals{$class->app_namespace}->[1]            }
@@ -40,8 +40,8 @@ package PlackX::Framework::Handler {
     my $response = $maybe_resp || ($app_namespace . '::Response')->new(200);
 
     # Maybe set globals
-    $streaming_support = $env->{'psgi.streaming'} ? !!1 : !!0
-      if !defined $streaming_support;
+    $psgix_streaming = $env->{'psgi.streaming'} ? !!1 : !!0
+      if !defined $psgix_streaming;
 
     $globals{$app_namespace} = [$request, $response]
       if $class->use_global_request_response;
@@ -162,7 +162,7 @@ package PlackX::Framework::Handler {
       $resp->stream_writer($PSGI_writer);
       $resp->stream->();
       $PSGI_writer->close;
-    } if $streaming_support;
+    } if $psgix_streaming;
 
     # Simulate streaming
     # "do" to make it look consistent with the above stanzas

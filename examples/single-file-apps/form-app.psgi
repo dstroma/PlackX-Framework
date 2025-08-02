@@ -91,7 +91,7 @@ package PXF::Example::FormApp::Routes {
   };
 
   # Demonstrate HTTP request method
-  route { post => '/login/submit' } => sub ($request, $response) {
+  route { post => ['/login-submit','/login/submit'] } => sub ($request, $response) {
     my $username = $request->param('username');
     my $password = $request->param('password');
 
@@ -124,8 +124,8 @@ package PXF::Example::FormApp::Routes {
     my $supports_cleanup = $request->env->{'psgix.cleanup'};
 
     $response->add_cleanup_callback(sub ($env) {
-      warn "Cleanup callback! Sleeping for 1 second...";
-      warn "(server does not support cleanup callbacks! so this will cause blocking...)\n" unless $supports_cleanup;
+      say "Cleanup callback: sleeping for 1 second...";
+      say "(server does not support cleanup callbacks, so this will cause blocking...)" unless $supports_cleanup;
       sleep 1;
       $counter++;
     });

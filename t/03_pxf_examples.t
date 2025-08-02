@@ -6,25 +6,24 @@ do_tests();
 done_testing();
 
 #######################################################################
+# We test the three "single-file" app examples here                   #
+#######################################################################
 
 sub do_tests {
 
+  #
   # Hello World app
+  #
   {
     my $app = do './examples/single-file-apps/hello-world.psgi';
     my ($test_env, $response);
 
     ok(
-      $app,
-      'app loaded true'
+      ($app and ref $app eq 'CODE'),
+      'app loaded correctly and is a coderef'
     );
 
-    is(
-      ref $app => 'CODE',
-      'app loaded coderef'
-    );
-
-    $test_env = test_env();
+     $test_env = test_env();
     $response = $app->($test_env);
 
     ok(
@@ -55,7 +54,7 @@ sub do_tests {
       'response body is correct, different query string'
     );
 
-    foreach my $wrong_path (qw|hello-world helo word helllo helloo worlld wworld worldd|) {
+    foreach my $wrong_path (qw|hello-world helo word helllo helloo worlld wworld worldd|, 'hello/world', 'world/hello') {
       $test_env = test_env();
       $test_env->{PATH_INFO} = "/$wrong_path";
       $response = $app->($test_env);
@@ -76,19 +75,16 @@ sub do_tests {
     }
   }
 
+  #
   # Form app
+  #
   {
     my $app = do './examples/single-file-apps/form-app.psgi';
     my ($test_env, $response);
 
     ok(
-      $app,
-      'app loaded true'
-    );
-
-    is(
-      ref $app => 'CODE',
-      'app loaded coderef'
+      ($app and ref $app eq 'CODE'),
+      'app loaded correctly and is a coderef'
     );
 
     $test_env = test_env();
@@ -235,38 +231,92 @@ sub do_tests {
       'Global filter applied outside of package'
     );
   }
+
+  #
+  # Streaming app
+  #
+  {
+    # PXF::Handler is already loaded, so knows streaming is off
+    my $app = do './examples/single-file-apps/streaming-app.psgi';
+    my ($test_env, $response, $body);
+
+    $test_env = test_env();
+    $test_env->{PATH_INFO} = "/stream-example";
+    $response = $app->($test_env);
+    $body = join '', $response->[2]->@*;
+
+    my $should_match = join('.+', map { "Hello $_" } 0..5);
+    ok(
+      $body =~ m/$should_match/s,
+      'Streaming body lines sent in correct order (streaming off)'
+    );
+
+    # With streaming
+    {
+      $test_env = test_env();
+      $test_env->{PATH_INFO} = "/stream-example";
+      $test_env->{'psgix.streaming'} = !!1;
+      {
+        no warnings; # used only once
+        $PlackX::Framework::Handler::psgix_streaming = !!1;
+      }
+      $response = $app->($test_env);
+      is(
+        ref $response => 'CODE',
+        'Response under streaming is a coderef'
+      );
+
+      require Plack::Util;
+      $body = '';
+      my $responder = sub ($partial_response) {
+        is(
+          ref $partial_response => 'ARRAY',
+          'Streaming response is arrayref'
+        );
+        is(
+          @$partial_response => 2,
+          'Streaming response arrayref has 2 elements'
+        );
+        is(
+          $partial_response->[0] => 200,
+          'Streaming response has HTTP status 200'
+        );
+        my $writer = Plack::Util::inline_object(
+          write => sub { $body .= $_[0] },
+          close => sub {                },
+        );
+      };
+      $response->($responder);
+      ok(
+        $body =~ m/$should_match/s,
+        'Streaming body lines sent in correct order (streaming on)'
+      );
+    }
+  }
 }
 
 ###############################################################################
 sub test_env {
   return {
-    'psgi.version' => [1, 1],
-    'psgi.errors' => *::STDERR,
-    'psgi.multiprocess' => '',
-    'psgi.multithread' => '',
+    'psgi.version'     => [1, 1],
+    'psgi.errors'      => '',
     'psgi.nonblocking' => '',
-    'psgi.run_once' => '',
-    'psgi.streaming' => 0,
-    'psgi.url_scheme' => 'http',
-    'psgix.harakiri' => 1,
-    'psgix.input.buffered' => 1,
-    'QUERY_STRING' => '',
-    'HTTP_ACCEPT' => 'text/html,text/plain',
-    'REQUEST_METHOD' => 'GET',
-    'HTTP_USER_AGENT' => 'Mock',
-    'SCRIPT_NAME' => '',
-    'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',
-    'SERVER_PROTOCOL' => 'HTTP/1.0',
-    'HTTP_SEC_FETCH_SITE' => 'none',
-    'PATH_INFO' => '/',
-    'HTTP_DNT' => '1',
-    'HTTP_CACHE_CONTROL' => 'max-age=0',
-    'HTTP_ACCEPT_ENCODING' => 'gzip, deflate, br',
-    'REMOTE_ADDR' => '127.0.0.1',
-    'HTTP_HOST' => 'localhost:5000',
-    'SERVER_NAME' => 0,
-    'REMOTE_PORT' => 62037,
-    'SERVER_PORT' => 5000,
-    'REQUEST_URI' => '/'
+    'psgi.run_once'    => '',
+    'psgi.streaming'   => 0,
+    'psgi.url_scheme'  => 'http',
+    'PATH_INFO'        => '/',
+    'QUERY_STRING'     => '',
+    'REMOTE_ADDR'      => '127.0.0.1',
+    'REMOTE_PORT'      => 99999,
+    'REQUEST_METHOD'   => 'GET',
+    'REQUEST_URI'      => '/',
+    'SCRIPT_NAME'      => '',
+    'SERVER_NAME'      => 0,
+    'SERVER_PORT'      => 99999,
+    'SERVER_PROTOCOL'  => 'HTTP/1.0',
+    'HTTP_ACCEPT'      => 'text/html,text/plain',
+    'HTTP_USER_AGENT'  => 'Test',
+    'HTTP_DNT'         => '1',
+    'HTTP_HOST'        => 'localhost:99999',
   };
 }

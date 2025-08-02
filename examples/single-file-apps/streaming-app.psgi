@@ -18,7 +18,7 @@ package StreamingApp {
       # Only use $response->print() inside the code block
       # Calling other methods on the $response object will not make sense
       # PXF will emulate PSGI streaming if it is not available.
-      for my $i (0..10) {
+      for my $i (0..5) {
         $response->print("Hello $i<br>\n");
         # Simulate a slow response with sleep
         sleep 1;
