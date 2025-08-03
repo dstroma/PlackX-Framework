@@ -2,6 +2,12 @@
 use v5.36;
 
 package Example::TemplateEngine {
+  use Role::Tiny::With;
+  with 'PlackX::Framework::Role::TemplateEngine';
+
+  use FindBin;
+  my $template_dir = $FindBin::Bin . '/percent-templates/';
+
   sub new       ($class)      { bless {}, $class           }
   sub error     ($self)       { $self->{err}               }
   sub set_error ($self, $msg) { $self->{err} = $msg; undef }
@@ -12,7 +18,7 @@ package Example::TemplateEngine {
   # This module does not HAVE to have a TT-compatible interface, but if not
   # will require more work to integrate.
   sub process ($self, $file, $params, $printer) {
-    $file = "./percent-templates/$file.html";
+    $file = "$template_dir/$file.html";
     if (open(my $fh, '<', $file)) {
       while (my $line = <$fh>) {
         while (my ($varname) = $line =~ m/%%%(\w+)%%%/) {
@@ -40,7 +46,7 @@ package MyApp {
   use MyApp::Router;
 
   # Add routes
-  request ['/', '/{page}'] => sub ($request, $response) {
+  route ['/', '/{page}'] => sub ($request, $response) {
     $response->template->set(
       page    => $request->route_param('page') || 'index',
       somevar => $request->param('somevar'),
