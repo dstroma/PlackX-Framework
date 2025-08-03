@@ -52,9 +52,12 @@ package PlackX::Framework::Template {
   }
 
   sub output ($self, $file = undef, $params = undef) {
-    $self->set_params(%$params) if $params and ref $params and ref $params eq 'HASH';
+    $self->set_params(%$params) if $params and ref $params eq 'HASH';
     $file //= $self->{filename};
-    $self->{engine}->process($file, $self->{params}, $self->{response}) || die 'Template error: '.$self->{engine}->error;
+    $self->{engine}->process($file, $self->{params}, $self->{response})
+      or die 'Template engine process() method failed.' . (
+        $self->{engine}->can('error') ? ' '.$self->{engine}->error : ''
+      );
   }
 
   sub self_to_class ($self)         { ref $self ? ref $self : $self }
