@@ -4,45 +4,68 @@ package PlackX::Framework::Handler {
   use Module::Loaded qw(is_loaded);
   use HTTP::Status qw(status_message);
 
-  # Overridable options
-  my %globals;
-  our $psgix_streaming; # memoize, but use an "our" var so Tests can change it
+  my  %globals;
+  our $psgix_streaming; # memoized, but in an "our" var so tests can change it
   sub use_global_request_response    { } # Override in subclass to turn on
   sub global_request        ($class) { $globals{$class->app_namespace}->[0]            }
   sub global_response       ($class) { $globals{$class->app_namespace}->[1]            }
-  sub error_response ($class, $code) { [$code, [], [status_message($code)." ($code)"]] }
+  sub error_response ($class, $code) { [$code, [], [status_message($code)." ($code)"]] } # Override for nicer message
 
-  # Public class methods
+  #
+  # App assembly section
+  #
   sub to_app ($class, %options)  {
     my $serve_static_files = delete $options{'serve_static_files'};
     my $static_docroot     = delete $options{'static_docroot'};
     die "Unknown options: " . join(', ', keys %options) if %options;
 
-    return sub ($env) { psgi_response($class->handle_request($env)) }
-      unless $serve_static_files;
+    my $main_app = sub ($env) { psgi_response($class->handle_request($env)) };
+    my $file_app = ($serve_static_files and do {
+      require Plack::App::File;
+      Plack::App::File->new(root => $static_docroot)->to_app;
+    });
 
-    require Plack::App::File;
-    my $file_app = Plack::App::File->new(root => $static_docroot)->to_app;
+    # app_base + static file app: combine both with URLMap
+    if (my $app_base = $class->app_base) {
+      require Plack::App::URLMap;
+      my $mapper = Plack::App::URLMap->new;
+      $mapper->map($app_base => $main_app);
+      $mapper->map('/'       => $file_app) if $file_app;
+      return $mapper->to_app;
+    }
+
+    # static file app with no app_base, so try one, try the other if it's 404
     return sub ($env) {
-      my $app_response  = psgi_response($class->handle_request($env));
-      return $app_response if ref $app_response and $app_response->[0] != 404;
-      my $file_response = psgi_response($file_app->($env));
-      return $file_response;
-    };
+      my $main_resp = $main_app->($env);
+      return $main_resp if ref $main_resp and $main_resp->[0] != 404;
+      my $file_resp = $file_app->($env);
+      return $file_resp;
+    } if $file_app;
+
+    # no app_base, no static file app, just return the main app
+    return $main_app;
   }
 
+  sub app_base ($class) {
+    my $base = eval { $class->app_namespace->app_base } || eval { $class->app_namespace->uri_prefix } || '';
+    $base = '/'.$base if $base and length $base and substr($base,0,1) ne '/';
+    return $base;
+  }
+
+  #
+  # Request handling section
+  #
   sub handle_request ($class, $env_or_req, $maybe_resp = undef) {
     my $app_namespace  = $class->app_namespace;
 
-    # Get or create request and response objects
+    # Get or create default request and response objects
     my $env      = $class->env_or_req_to_env($env_or_req);
     my $request  = $class->env_or_req_to_req($env_or_req);
     my $response = $maybe_resp || ($app_namespace . '::Response')->new(200);
 
-    # Maybe set globals
+    # Memoize server info and maybe set request/response globals
     $psgix_streaming = $env->{'psgi.streaming'} ? !!1 : !!0
       if !defined $psgix_streaming;
-
     $globals{$app_namespace} = [$request, $response]
       if $class->use_global_request_response;
 
@@ -70,9 +93,6 @@ package PlackX::Framework::Handler {
   }
 
   sub route_request ($class, $request, $response) {
-    my $result = check_request_prefix($class->app_namespace, $request);
-    return $result if $result;
-
     my $rt_engine = ($class->app_namespace . '::Router::Engine')->instance;
     if (my $match = $rt_engine->match($request)) {
       $request->route_base($match->{base}) if defined $match->{base};
@@ -117,21 +137,9 @@ package PlackX::Framework::Handler {
     return $class->error_response(404);
   }
 
-  # Helpers ###################################################################
-
-  sub check_request_prefix ($class, $request) {
-    if ($class->can('uri_prefix') and my $prefix = $class->uri_prefix) {
-      $prefix = "/$prefix" if substr($prefix,0,1) ne '/';
-      if (substr($request->destination, 0, length $prefix) eq $prefix) {
-        $request->{destination}    = substr($request->destination, length $prefix);
-        $request->{removed_prefix} = $prefix;
-        return;
-      }
-      return not_found_response();
-    }
-    return;
-  }
-
+  #
+  # Helper function and method section
+  #
   sub execute_filters ($filters, $request, $response) {
     return unless $filters and ref $filters eq 'ARRAY';
     foreach my $filter (@$filters) {
@@ -164,12 +172,11 @@ package PlackX::Framework::Handler {
       $PSGI_writer->close;
     } if $psgix_streaming;
 
-    # Simulate streaming
-    # "do" to make it look consistent with the above stanzas
+    # Simulate streaming, use "do" to make it look consistent with the above
     return do {
-      $resp->stream->();
-      $resp->stream(undef);
-      $resp->finalize;
+      $resp->stream->();    # execute coderef
+      $resp->stream(undef); # unset stream property
+      $resp->finalize;      # finalize
     };
   }
 
