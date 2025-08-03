@@ -55,17 +55,17 @@ sub do_tests {
     my $uri = $class->new('http://www.schmoogle.com/search/more/page.html?a=1&b=2&c=3');
 
     ok(
-      $uri->goto('../')->isa('PlackX::Framework::URIx'),
+      $uri->merge('../')->isa('PlackX::Framework::URIx'),
       'to() returns PlackX::Framework::URIx object'
     );
 
-    is($uri->goto('other.html') => 'http://www.schmoogle.com/search/more/other.html' => 'to() relative page goes to correct absolute url');
-    is($uri->goto('/')          => 'http://www.schmoogle.com/'                       => 'to() / goes to root');
-    is($uri->goto('./')         => 'http://www.schmoogle.com/search/more'            => 'to() ./ goes to parent path');
-    is($uri->goto('../')        => 'http://www.schmoogle.com/search'                 => 'to() ../ goes up a path');
+    is($uri->merge('other.html') => 'http://www.schmoogle.com/search/more/other.html' => 'to() relative page goes to correct absolute url');
+    is($uri->merge('/')          => 'http://www.schmoogle.com/'                       => 'to() / goes to root');
+    is($uri->merge('./')         => 'http://www.schmoogle.com/search/more'            => 'to() ./ goes to parent path');
+    is($uri->merge('../')        => 'http://www.schmoogle.com/search'                 => 'to() ../ goes up a path');
 
     is(
-      $uri->goto_with_query('other.html') => 'http://www.schmoogle.com/search/more/other.html?a=1&b=2&c=3',
+      $uri->merge_with_query('other.html') => 'http://www.schmoogle.com/search/more/other.html?a=1&b=2&c=3',
       'to_with_query() preserves query string'
     );
   }

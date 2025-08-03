@@ -20,6 +20,33 @@ sub do_tests {
         $response->print('Hello world!');
         $response;
       };
+
+      route '/a' => sub ($request, $response) {
+        return $request->reroute('/b');
+      };
+
+      route '/b' => sub ($request, $response) {
+        $response->print('Reroute Test 1');
+        $response;
+      };
+
+      route '/aa/bb/cc' => sub ($request, $response) {
+        return $request->reroute('/cc/bb/aa');
+      };
+
+      route '/xx/yy/zz' => sub ($request, $response) {
+        $response->redirect($request->uri_to('/b'));
+        return $response;
+      };
+
+      route '/cc/bb/aa' => sub ($request, $response) {
+        if (my $to = $request->param('uri_to')) {
+          $response->print($request->uri_to("/$to"));
+        } else {
+          $response->print('Reroute Test 2');
+        }
+        return $response;
+      };
     }
     1;
   } or die "Problem setting up test: $@";
@@ -60,6 +87,68 @@ sub do_tests {
     $result, $result2,
     'Calling Handler->to_app->() and App->app->() gives same result'
   );
+
+  #
+  # Check re-routing feature
+  #
+  use Plack::Test;
+  use HTTP::Request::Common;
+  test_psgi My::Test::App2->app, sub ($cb) {
+    my $response = $cb->(GET "/a");
+    is(
+      $response->content => "Reroute Test 1",
+      'Reroute Test 1'
+    );
+  };
+
+  test_psgi My::Test::App2->app, sub ($cb) {
+    my $response = $cb->(GET "/aa/bb/cc");
+    is(
+      $response->content => "Reroute Test 2",
+      'Reroute Test 2'
+    );
+  };
+
+  #
+  # Check to see if routes play nice with builder
+  #
+  use Plack::Builder;
+  my $builder_app = builder {
+    mount "/wonderland/alice" => My::Test::App2->app;
+  };
+
+  test_psgi $builder_app, sub ($cb) {
+    my $response = $cb->(GET "/wonderland/alice/a");
+    is(
+      $response->content => "Reroute Test 1",
+      'Reroute Test 1 inside builder'
+    );
+  };
+
+  test_psgi $builder_app, sub ($cb) {
+    my $response = $cb->(GET "/wonderland/alice/aa/bb/cc");
+    is(
+      $response->content => "Reroute Test 2",
+      'Reroute Test 2 inside builder'
+    );
+  };
+
+  test_psgi $builder_app, sub ($cb) {
+    my $response = $cb->(GET "/wonderland/alice/aa/bb/cc?uri_to=b");
+    is(
+      $response->content => "http://localhost/wonderland/alice/b",
+      'Reroute and uri_to test'
+    );
+  };
+
+  test_psgi $builder_app, sub ($cb) {
+    my $response = $cb->(GET "/wonderland/alice/xx/yy/zz");
+    is(
+      $response->header('Location') => "http://localhost/wonderland/alice/b",
+      'Redirect test inside builder'
+    );
+  };
+
 
   # use() PlackX::Framework with all optional modules
   ok(

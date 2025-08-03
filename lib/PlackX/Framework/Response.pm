@@ -43,42 +43,6 @@ package PlackX::Framework::Response {
     return $self;
   }
 
-  sub redirect ($self, @args) {
-    if (@args) {
-      my $url = shift @args;
-      $url = $self->add_prefix_to_url($$url) if ref $url;
-      $url = $self->maybe_add_base_to_url($url);
-      unshift @args, $url;
-    }
-
-    $self->SUPER::redirect(@args);
-    return $self;
-  }
-
-  sub add_prefix_to_url ($self, $url) {
-    if ($self->app_namespace->can('uri_prefix')) {
-      my $prefix = $self->app_namespace->uri_prefix;
-      $prefix = substr($prefix, 0, length $prefix - 1) if substr($prefix, -1, 1) eq '/';
-      $url = substr($url, 1) if substr($url, 0, 1) eq '/';
-      $url = join('/', $self->app_namespace->uri_prefix, $url);
-    }
-    if ($url !~ m`://` and my $request = ($self->stash->{REQUEST} || $self->GlobalRequest)) {
-      $url = substr($url, 1) if substr($url, 0, 1) eq '/';
-      $url = $request->base . $url;
-    }
-    return $url;
-  }
-
-  sub maybe_add_base_to_url ($self, $url) {
-    warn "maybe_add_base_to_url is inop";
-    return $url;
-    if ($url !~ m`://` and my $request = (($self->stash && $self->stash->{REQUEST}) || $self->GlobalRequest)) {
-      $url = substr($url, 1) if substr($url, 0, 1) eq '/';
-      $url = $request->base . $url;
-    }
-    return $url;
-  }
-
   sub no_cache ($self, $bool) {
     my $val = $bool ? 'no-cache' : undef;
     $self->header('Pragma' => $val, 'Cache-control' => $val);

@@ -19,33 +19,30 @@ package PlackX::Framework::Request {
   sub cgi_param   ($self, $key) { $self->SUPER::param($key)        } # CGI.pm compatibile
   sub route_param ($self, $key) { $self->{route_parameters}{$key}  }
   sub stash_param ($self, $key) { $self->{stash}{$key}             }
-  sub uri_goto    ($self, $uri) { $self->urix->goto($uri)          }
+  sub abs_to      ($self, $pth) { $self->base . with_leadslash($pth)          }
+  sub rel_to      ($self, $pth) { $self->abs_to($pth) =~ s|^https?://.+?/||ir }
   sub urix              ($self) { ($self->app_namespace.'::URIx')->new_from_pxfrequest($self) }
-  sub with_slash         ($uri) { substr($uri, 0, 1) eq '/' ? $uri : '/'.$uri; }
-
-  # Take a path and apply app and route prefixes
-  sub rel_uri_for ($self, $uri) {
-    return
-      with_slash($self->app_base)   .
-      with_slash($self->route_base) .
-      with_slash($uri)              ;
-  }
-
-  # Take a path and apply app and route prefixes, domain name, etc.
-  sub abs_uri_for ($self, $uri) {
-    return $self->uri_goto($self->rel_uri_for($uri));
-  }
-  *uri_for = \&abs_uri_for;
+  sub with_leadslash     ($uri) { substr($uri, 0, 1) eq '/' ? $uri : '/'.$uri }
+  *uri_to = \&abs_to;
 
   # Send request somewhere else without issuing the client an HTTP redirect
-  # ::Handler will reprocess if it gets a request instead of response obj
+  # ::Handler will reprocess if it gets a request instead of response object
   sub reroute ($self, $dest) {
-    $self->{destination} = $dest;
-    $self->{reroutes}  //= [$self->path_info];
+    croak "Specify reroute relative to application path"
+      if $dest =~ m/^http/;
+
+    croak "request->reroute path must start with /"
+      if substr($dest, 0, 1) ne '/';
+
+    $self->{reroutes} //= [$self->path_info];
     push @{$self->{reroutes}}, $dest;
 
     croak "Excessive reroutes:\n" . join("\n", $self->{reroutes}->@*)
       if $self->{reroutes}->@* > $self->max_reroutes;
+
+    my $orig_path_info        = $self->path_info;
+    $self->env->{PATH_INFO}   = $dest;
+    $self->env->{REQUEST_URI} =~ s|$orig_path_info|$dest|;
 
     return $self;
   }

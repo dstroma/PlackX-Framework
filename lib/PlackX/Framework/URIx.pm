@@ -52,14 +52,14 @@ package PlackX::Framework::URIx {
   #  - URI.pm is a pain to subclass, returning objects blessed into different
   #    classes depending on the argument
 
-  sub goto ($self, $rel) {
+  sub merge ($self, $rel) {
     die 'Object method called as class method' unless ref $self;
     my $new = URI->new_abs("$rel", "$self");
     return (ref $self)->new("$new");
   }
 
-  sub goto_with_query ($self, $rel) {
-    my $new = $self->goto($rel);
+  sub merge_with_query ($self, $rel) {
+    my $new = $self->merge($rel);
     $new->query(scalar $self->query);
     return $new;
   }
