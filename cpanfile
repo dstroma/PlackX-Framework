@@ -3,7 +3,6 @@ requires 'Plack';
 requires 'Module::Loaded';
 requires 'Role::Tiny';
 requires 'Router::Boom';
-requires 'URI::Fast';
 
 # In core but list anyway
 requires 'Digest::MD5';
@@ -14,6 +13,7 @@ requires 'Scalar::Util';
 recommends 'Config::Any';
 recommends 'JSON::MaybeXS';
 recommends 'Template';
+recommends 'URI::Fast';
 
 # For Testing
 on 'test' => sub {

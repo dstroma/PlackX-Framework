@@ -5,43 +5,10 @@ package PlackX::Framework::URIx {
   use URI ();
   use URI::Escape ();
 
-  # new_from_pxfrequest
-  # SUBROUTINE COPIED FROM PLACK::REQUEST AND MODIFIED FOR PLACKX::FRAMEWORK
   sub new_from_pxfrequest ($class, $requ) {
-    my $base = $requ->_uri_base;
-
-    # PXF MODIFICATION
-    # We can't use $requ->env->{PATH_INFO} in case the request has been rerouted
-    # with $request->reroute(...), and we also can't use ->destination() as-is
-    # because PXF::Handler might have modified it to remove the app uri_prefix
-    my $path_info;
-    {
-      my $removed_prefix = defined $requ->{removed_prefix} ? $requ->{removed_prefix} : '';
-      my $destination    = $requ->destination;
-      $path_info         = $removed_prefix . $destination;
-    }
-    # END PXF MODIFICATION
-
-    # We have to escape back PATH_INFO in case they include stuff like
-    # ? or # so that the URI parser won't be tricked. However we should
-    # preserve '/' since encoding them into %2f doesn't make sense.
-    # This means when a request like /foo%2fbar comes in, we recognize
-    # it as /foo/bar which is not ideal, but that's how the PSGI PATH_INFO
-    # spec goes and we can't do anything about it. See PSGI::FAQ for details.
-
-    # See RFC 3986 before modifying.
-    my $path_escape_class = q{^/;:@&=A-Za-z0-9\$_.+!*'(),-};
-
-#   my $path = URI::Escape::uri_escape($requ->env->{PATH_INFO} || '', $path_escape_class); # ORIGINAL
-    my $path = URI::Escape::uri_escape($path_info              || '', $path_escape_class); # PXF MODIFICATION
-    $path .= '?' . $requ->env->{QUERY_STRING}
-        if defined $requ->env->{QUERY_STRING} && $requ->env->{QUERY_STRING} ne '';
-
-    $base =~ s!/$!! if $path =~ m!^/!;
-
-    return $class->new($base . $path)->normalize;
+    my $uri = $requ->uri;
+    return $class->new("$uri")->normalize;
   }
-
 
   # The below line causes a buffer overflow on github!
   # URI::Fast->new('other.html')->absolute('http://www.somewebsite.com/somedir/somewhere');
@@ -151,6 +118,15 @@ calls may be chained.
 The following methods are those in addition to the ones contained in the
 URI::Fast module.
 
+=head3 merge($rel_uri)
+
+Merge a URI with a relative URI, e.g. with a URIx object of
+http://www.somewhere.com/fruit/apple and a $rel_uri of '../vegetable/carrot',
+returns http://www.somewhere.com/vegetable/carrot.
+
+=head3 merge_with_query($rel_uri)
+
+Same as merge(), but preserves the query string.
 
 =head3 query_set(@pairs)
 

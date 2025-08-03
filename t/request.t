@@ -72,6 +72,7 @@ sub sample_env {
     SCRIPT_NAME       => '/foo',
     REMOTE_ADDR       => '127.0.0.1',
     PATH_INFO         => '/foo',
+    REQUEST_URI       => '/foo',
     HTTP_COOKIE       => 'NOT_IMPLEMENTED=NOT_IMPLEMENTED',
     QUERY_STRING      => 'food=pizza&drink=beer&drink=pepsi&drink=wine&drink=water',
     'psgi.version'    => [ 1, 0 ],

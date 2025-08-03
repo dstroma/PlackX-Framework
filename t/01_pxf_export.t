@@ -21,7 +21,7 @@ sub do_tests {
   );
 
   # Test automatic subclass generation and exporting app_namespace() method to each
-  foreach my $auto_class (qw(Handler Request Response Router Router::Engine URIx)) {
+  foreach my $auto_class (qw(Handler Request Response Router Router::Engine)) {
     ok(
       "My::Test::App1::$auto_class"->isa('PlackX::Framework::'.$auto_class),
       "$auto_class is automatically created and is subclass of respective PXF class"

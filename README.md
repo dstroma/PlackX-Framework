@@ -37,12 +37,12 @@ PlackX::Framework consists of the required modules:
 - PlackX::Framework::Response
 - PlackX::Framework::Router
 - PlackX::Framework::Router::Engine
-- PlackX::Framework::URIx
 
 And the following optional modules:
 
 - PlackX::Framework::Config
 - PlackX::Framework::Template
+- PlackX::Framework::URIx
 
 The statement "use PlackX::Framework" will automatically find and load all of
 the required modules. Then it will look for subclasses of the modules listed 
@@ -209,10 +209,12 @@ each request by the app() method of PlackX::Framework::Handler.
 
 ### PlackX::Framework::URIx
 
-The PlackX::Framework::URIx module is a subclass of URI::Fast, with some
-syntactic sugar for manipulating query string. It is made available to your
+The PlackX::Framework::URIx is a URI processing module with extended features,
+and it is a subclass of URI::Fast. It is made available to your
 your request objects through $request->urix (the x is to not confuse it
-with the Plack::Request->uri() method).
+with the Plack::Request->uri() method). If you have not enabled the URIx
+feature in your application, with the :URIx or :all tag, the request->urix
+method will cause an error.
 
 # Why Another Framework?
 
@@ -320,7 +322,7 @@ plain DBI/SQL.
 
 This module will export the method app, which returns the code reference of
 your app in accordance to the PSGI specification. (This is actually a shortcut
-to \[ProjectName\]::Handler->to\_app.)
+to \[ProjectName\]::Handler->build\_app.)
 
 # DEPENDENCIES
 

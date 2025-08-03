@@ -55,14 +55,14 @@ sub do_tests {
     'app() class method generated'
   );
 
-  ok(My::Test::App2::Handler->can('to_app'),
-    'Handler::to_app method generated'
+  ok(My::Test::App2::Handler->can('build_app'),
+    'Handler::build_app method generated'
   );
 
-  my $app = My::Test::App2::Handler->to_app;
+  my $app = My::Test::App2::Handler->build_app;
   ok(
     (ref $app and ref $app eq 'CODE'),
-    'Handler->to_app returns a coderef'
+    'Handler->build_app returns a coderef'
   );
 
   my $app2 = My::Test::App2->app;

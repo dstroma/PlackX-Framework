@@ -14,7 +14,7 @@ package PlackX::Framework::Handler {
   #
   # App assembly section
   #
-  sub to_app ($class, %options)  {
+  sub build_app ($class, %options)  {
     my $serve_static_files = delete $options{'serve_static_files'};
     my $static_docroot     = delete $options{'static_docroot'};
     die "Unknown options: " . join(', ', keys %options) if %options;
@@ -25,7 +25,7 @@ package PlackX::Framework::Handler {
       Plack::App::File->new(root => $static_docroot)->to_app;
     });
 
-    # app_base + static file app: combine both with URLMap
+    # if app_base is specified, use URLMap
     if (my $app_base = $class->app_base) {
       require Plack::App::URLMap;
       my $mapper = Plack::App::URLMap->new;

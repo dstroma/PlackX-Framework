@@ -12,7 +12,7 @@ package PlackX::Framework::Request {
   sub is_put            ($self) { uc $self->method eq 'PUT'    }
   sub is_delete         ($self) { uc $self->method eq 'DELETE' }
   sub is_ajax           ($self) { uc($self->header('X-Requested-With') || '') eq 'XMLHTTPREQUEST' }
-  sub destination       ($self) { $self->{destination} // $self->path_info   }
+  sub destination       ($self) { $self->{destination} // $self->path        }
   sub flash             ($self) { $self->cookies->{$self->flash_cookie_name} }
   sub flash_cookie_name ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace) }
   sub param       ($self, $key) { scalar $self->parameters->{$key} } # faster than scalar $self->param($key)
@@ -30,7 +30,6 @@ package PlackX::Framework::Request {
   sub reroute ($self, $dest) {
     croak "Specify reroute relative to application path"
       if $dest =~ m/^http/;
-
     croak "request->reroute path must start with /"
       if substr($dest, 0, 1) ne '/';
 
@@ -41,6 +40,7 @@ package PlackX::Framework::Request {
       if $self->{reroutes}->@* > $self->max_reroutes;
 
     my $orig_path_info        = $self->path_info;
+    $self->{"pxf.orig.$_"}  //= $self->env->{$_} for ('PATH_INFO', 'REQUEST_URI');
     $self->env->{PATH_INFO}   = $dest;
     $self->env->{REQUEST_URI} =~ s|$orig_path_info|$dest|;
 

@@ -5,8 +5,8 @@ package PlackX::Framework 0.24 {
   use Digest::MD5 ();
 
   our @plugins = ();
-  sub required_modules { qw(Handler Request Response Router Router::Engine URIx) }
-  sub optional_modules { qw(Config Template), @plugins }
+  sub required_modules { qw(Handler Request Response Router Router::Engine) }
+  sub optional_modules { qw(Config Template URIx), @plugins }
 
   # Export ->app, load parent classes and load or create subclasses
   sub import (@options) {
@@ -35,7 +35,7 @@ package PlackX::Framework 0.24 {
   sub export_app_sub ($destination_namespace) {
     no strict 'refs';
     *{$destination_namespace . '::app'} = sub ($class, @options) {
-      ($class.'::Handler')->to_app(@options);
+      ($class.'::Handler')->build_app(@options);
     };
   }
 
@@ -117,8 +117,6 @@ PlackX::Framework consists of the required modules:
 
 =item PlackX::Framework::Router::Engine
 
-=item PlackX::Framework::URIx
-
 =back
 
 And the following optional modules:
@@ -128,6 +126,8 @@ And the following optional modules:
 =item PlackX::Framework::Config
 
 =item PlackX::Framework::Template
+
+=item PlackX::Framework::URIx
 
 =back
 
@@ -309,10 +309,12 @@ each request by the app() method of PlackX::Framework::Handler.
 
 =head3 PlackX::Framework::URIx
 
-The PlackX::Framework::URIx module is a subclass of URI::Fast, with some
-syntactic sugar for manipulating query string. It is made available to your
+The PlackX::Framework::URIx is a URI processing module with extended features,
+and it is a subclass of URI::Fast. It is made available to your
 your request objects through $request->urix (the x is to not confuse it
-with the Plack::Request->uri() method).
+with the Plack::Request->uri() method). If you have not enabled the URIx
+feature in your application, with the :URIx or :all tag, the request->urix
+method will cause an error.
 
 
 =head1 Why Another Framework?
@@ -431,7 +433,7 @@ plain DBI/SQL.
 
 This module will export the method app, which returns the code reference of
 your app in accordance to the PSGI specification. (This is actually a shortcut
-to [ProjectName]::Handler->to_app.)
+to [ProjectName]::Handler->build_app.)
 
 
 =head1 DEPENDENCIES
