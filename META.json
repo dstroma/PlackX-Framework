@@ -50,7 +50,6 @@
          "requires" : {
             "Digest::MD5" : "0",
             "List::Util" : "0",
-            "Module::Loaded" : "0",
             "Plack" : "0",
             "Role::Tiny" : "0",
             "Router::Boom" : "0",

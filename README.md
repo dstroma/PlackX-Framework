@@ -271,15 +271,41 @@ subclassing, while using the framework will not.
 
 ## Configuration
 
+### app\_base
+
 ### uri\_prefix
 
 In your application's root namespace, you can set the base URL for requests
-by defining a uri\_prefix subroutine.
+by defining an app\_base subroutine; uri\_prefix can be used as a synonym.
 
     package MyApp {
       use PlackX::Framework;
-      sub uri_prefix { '/app' }
+      sub app_base { '/app' } # or uri_prefix
     }
+
+Internally, this uses Plack::App::URLMap to cleave the base from the path\_info.
+This feature will not play well if you mount your app to a particular uri path
+using Plack::Builder. Use one or the other, not both. If you would like to give
+your app flexibility for different environments, you could do something like
+the following:
+
+    # Main app package
+    package MyApp {
+      use PlackX::Framework;
+      sub app_base { $ENV{'myapp_base'} }
+    }
+
+    # one app .psgi file which uses Builder
+    use Plack::Builder;
+    $ENV{'myapp_base'} = '';
+    builder {
+      mount '/myapp' => MyApp->app;
+      ...
+    };
+
+    # another app .psgi file, perhaps on a different server, not using Builder
+    $ENV{'myapp_base'} = '/myapp';
+    MyApp->app;
 
 ## Routes, Requests, and Request Filtering
 
@@ -308,10 +334,13 @@ add them like this
 
     use MyApp::Template (INCLUDE_PATH => 'template');
 
-If you want to use your own templating system, create a MyApp::Template
-module that subclasses PlackX::Framework::Template. Then override the
-get\_template\_system\_object() method with your own code to create and/or
-retrieve your template system object.
+If you want to use your own templating system, you can create a MyApp::Template
+module that subclasses PlackX::Framework::Template, then override necessary
+methods; however, a simpler way is available if your templating system as a TT
+compatible process method, like this:
+
+    use MyApp::Template qw(:manual);
+    MyApp::Template->set_engine(My::Template::System->new(%options));
 
 ## Model Layer
 

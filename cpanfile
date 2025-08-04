@@ -1,6 +1,5 @@
 requires 'perl' => '5.036000';
 requires 'Plack';
-requires 'Module::Loaded';
 requires 'Role::Tiny';
 requires 'Router::Boom';
 
