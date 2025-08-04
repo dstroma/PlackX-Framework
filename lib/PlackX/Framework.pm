@@ -32,11 +32,10 @@ package PlackX::Framework 0.24 {
   }
 
   # Export app() sub to the app's main package
-  sub export_app_sub ($destination_namespace) {
+  sub export_app_sub ($to_package) {
+    my $code = sub ($class, @opts) { ($class.'::Handler')->build_app(@opts) };
     no strict 'refs';
-    *{$destination_namespace . '::app'} = sub ($class, @options) {
-      ($class.'::Handler')->build_app(@options);
-    };
+    *{$to_package.'::app'} = *{$to_package.'::to_app'} = $code;
   }
 
   # Export app_namespace() to App::Request, App::Response, etc.
