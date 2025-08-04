@@ -1,6 +1,6 @@
 use v5.36; # strict (5.12), warnings (5.35), signatures (5.36)
 package PlackX::Framework 0.24 {
-  use PXF::Util; #lackX::Framework::Util qw(md5_ushort is_module_loaded is_module_broken mark_module_loaded);
+  use PXF::Util ();
   use List::Util qw(any);
 
   our @plugins = ();
@@ -21,7 +21,7 @@ package PlackX::Framework 0.24 {
       eval 'require PlackX::Framework::'.$module
         or die $@ if $required{$module};
       eval 'require '.$caller.'::'.$module or do {
-        die $@ if is_module_broken($caller.'::'.$module);
+        die $@ if PXF::Util::is_module_broken($caller.'::'.$module);
         generate_subclass($caller.'::'.$module, 'PlackX::Framework::'.$module)
           if $required{$module} or $want_all or $want_mod->($module);
       };

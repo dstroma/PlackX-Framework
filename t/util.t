@@ -9,44 +9,56 @@ done_testing();
 
 sub do_tests {
 
-  my $class = 'PlackX::Framework::Util';
+  my $class = 'PXF::Util';
   use_ok($class);
-
-  # Import
-  PlackX::Framework::Util->import(qw/minisleep name_to_pm/);
-  is(\&minisleep  => \&PlackX::Framework::Util::minisleep,  'import ok 1');
-  is(\&name_to_pm => \&PlackX::Framework::Util::name_to_pm, 'import ok 2');
 
   # Sleep
   {
     require Time::HiRes;
-    for (my $interval = 0.1; $interval < 1; $interval*=2) {
+    for (my $interval = 0.1; $interval < 1; $interval *= 2) {
       my $t1 = Time::HiRes::time();
-      PlackX::Framework::Util::minisleep($interval);
+      PXF::Util::minisleep($interval);
       my $t2 = Time::HiRes::time();
       my $el = $t2 - $t1;
       ok(
-        ($el > $interval*0.85 and $el < $interval*1.15),
-        "Sleep for $interval seconds is accurate within 15%"
+        ($interval*0.85 < $el < $interval*1.15 and $interval-0.1 < $el < $interval+0.1),
+        "Sleep for $interval seconds is accurate within 15% and 0.1s"
       );
     }
   }
 
   # MD5
   {
-    my %known = (b => 'kutf_uauL-w61xx3dTFXjw');
+    my %known = (
+      'b' => 'kutf_uauL-w61xx3dTFXjw',
+      'abcdefghijklmnopqrstuvwxyz' => 'w_zT12GS5AB9-0lsymfhOw',
+    );
+
+    my %known_incorrect = (
+      'b' => 'kutf-uauL_w61xx3dTFXjw',
+      'abcdefghijklmnopqrstuvwxyz' => 'w_zT12GS5AB9_0lsymfhOw',
+      'random' => 'random',
+    );
+
     foreach my $key (keys %known) {
       is(
-        PlackX::Framework::Util::md5_ubase64($key) => $known{$key},
+        PXF::Util::md5_ubase64($key) => $known{$key},
         'url-encoded MD5 is correct'
       );
 
       for my $len (1..16) {
         is(
-          PlackX::Framework::Util::md5_ushort($key,$len) => substr($known{$key},0,$len),
+          PXF::Util::md5_ushort($key,$len) => substr($known{$key},0,$len),
           "url-encoded MD5 shortened to $len is correct"
         );
       }
+    }
+
+    foreach my $key (keys %known_incorrect) {
+      isnt(
+        PXF::Util::md5_ubase64($key) => $known_incorrect{$key},
+        'Known incorrect md5 is incorrect'
+      );
     }
   }
 
@@ -54,16 +66,16 @@ sub do_tests {
   {
     require Plack::Util;
     ok(
-      PlackX::Framework::Util::is_module_loaded('Plack::Util'),
+      PXF::Util::is_module_loaded('Plack::Util'),
       'Module is loaded'
     );
 
     ok(
-      (not PlackX::Framework::Util::is_module_broken('Plack::Util')),
+      (not PXF::Util::is_module_broken('Plack::Util')),
       'Module is not broken'
     );
     is(
-      PlackX::Framework::Util::name_to_pm('Plack::Util') => 'Plack/Util.pm',
+      PXF::Util::name_to_pm('Plack::Util') => 'Plack/Util.pm',
       'Module name to PM checks'
     );
 
@@ -74,7 +86,7 @@ sub do_tests {
       1;
     };
     ok(
-      (PlackX::Framework::Util::is_module_broken('BrokenTest')),
+      (PXF::Util::is_module_broken('BrokenTest')),
       'BrokenTest module is broken'
     );
   }

@@ -12,10 +12,8 @@ package PXF::Util {
   sub name_to_pm         ($name) { $name =~ s|::|/|gr . '.pm'        }
   sub mark_module_loaded ($name) { $INC{name_to_pm($name)} = 'DUMMY' }
   sub is_module_loaded   ($name) { exists $INC{name_to_pm($name)}    }
-  sub is_module_broken   ($name) {
-    my $pm = name_to_pm($name);
-    exists $INC{$pm} and !defined $INC{$pm}
-  }
+  sub is_module_ok       ($name) { defined $INC{name_to_pm($name)}   }
+  sub is_module_broken   ($name) { is_module_loaded($name) and !is_module_ok($name) }
 }
 
 1;
