@@ -1,6 +1,6 @@
 use v5.36; # strict (5.12), warnings (5.35), signatures (5.36)
 package PlackX::Framework 0.24 {
-  use PlackX::Framework::Util qw(md5_ushort is_module_loaded is_module_broken mark_module_loaded);
+  use PXF::Util; #lackX::Framework::Util qw(md5_ushort is_module_loaded is_module_broken mark_module_loaded);
   use List::Util qw(any);
 
   our @plugins = ();
@@ -26,7 +26,7 @@ package PlackX::Framework 0.24 {
           if $required{$module} or $want_all or $want_mod->($module);
       };
       export_app_namespace_sub($caller, $module)
-        if is_module_loaded($caller.'::'.$module);
+        if PXF::Util::is_module_loaded($caller.'::'.$module);
     }
   }
 
@@ -48,12 +48,12 @@ package PlackX::Framework 0.24 {
   # Helper to create a subclass and mark as loaded
   sub generate_subclass ($new_class, $parent_class) {
     eval "package $new_class; use parent '$parent_class'; 1" or die "Cannot create class: $@";
-    mark_module_loaded($new_class);
+    PXF::Util::mark_module_loaded($new_class);
   }
 
   # Keep name to 16B. Memoize so we don't have compute md5 each time.
   sub flash_cookie_name ($class) {
-    state %names; $names{$class} ||= 'flash'. md5_ushort($class, 11);
+    state %names; $names{$class} ||= 'flash'. PXF::Util::md5_ushort($class, 11);
   }
 }
 

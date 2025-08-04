@@ -1,7 +1,5 @@
 use v5.36;
-package PlackX::Framework::Util {
-  use PlackX::Framework::Exporter qw(import);
-
+package PXF::Util {
   # MD5 digests, url-encoded
   use Digest::MD5 ();
   sub md5_ubase64      ($str) { Digest::MD5::md5_base64($str) =~ tr|+/=|-_|dr }
@@ -26,18 +24,19 @@ package PlackX::Framework::Util {
 
 =head1 NAME
 
-PlackX::Framework::Util - Utilities for PXF
+PXF::Util - Utilities for PlackX::Framework
 
 
 =head1 SYNOPSIS
 
-    use PlackX::Framework::Util qw(md5_urlshort minisleep);
+    use PXF::Util;
+    PXF::Uil::md5_ubase64($string);
     ...
 
 
 =head1 EXPORTS
 
-None by default.
+None.
 
 
 =head1 FUNCTIONS

@@ -1,17 +1,13 @@
 use v5.36;
-package PlackX::Framework::Exporter {
-  use Carp qw(croak);
-
+package PXF::Exporter {
+  use Carp ();
   sub import ($class, @params) {
     return unless @params;
     my $caller = caller(0);
     foreach my $name (@params) {
-      croak qq|You probably should not import "$name"|
-        if $name !~ m/^[a-z][a-z0-9_]*$/;
-      croak qq|You probably should not import "import!"|
-        if $name eq 'import' and $class ne __PACKAGE__;
-      no strict 'refs';
-      *{$caller . '::' . $name} = \&{$class . '::' . $name};
+      Carp::croak qq(You probably should not import "$name")
+        if $name !~ m/^[a-z][a-z0-9_]*$/ or ($name eq 'import' and !$class->isa(__PACKAGE__));
+      { no strict 'refs'; *{$caller.'::'.$name} = \&{$class.'::'.$name}; }
     }
   }
 }
