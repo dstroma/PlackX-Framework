@@ -100,7 +100,6 @@ sub do_in_fork ($subref) {
   die if !defined $pid;
   if ($pid == 0) {
     $subref->();
-    #say "Child is done.";
     exit 0;
   } else {
     #say "Parent is waiting...";
@@ -178,4 +177,13 @@ Load time per app:
     mojo 240/s   2%   -- -59%
     pxf  590/s 151% 146%   -
 
-=cut
+=head2 Memory consumption:
+
+    mojo 44.1KB
+    dan  38.5KB
+    pxf   7.0KB
+
+=head1 META
+
+See PlackX::Framework.
+
