@@ -12,17 +12,15 @@ sub do_tests {
   my $class = 'PlackX::Framework::Util';
   use_ok($class);
 
-  # True and False
-  #{
-  #  ok( PlackX::Framework::Util::TRUE(),  'True is true');
-  #  ok(!PlackX::Framework::Util::FALSE(), 'False is false');
-  #}
+  # Import
+  PlackX::Framework::Util->import(qw/minisleep name_to_pm/);
+  is(\&minisleep  => \&PlackX::Framework::Util::minisleep,  'import ok 1');
+  is(\&name_to_pm => \&PlackX::Framework::Util::name_to_pm, 'import ok 2');
 
   # Sleep
   {
     require Time::HiRes;
-    foreach my $interval (1..9) {
-      $interval *= 0.1;
+    for (my $interval = 0.1; $interval < 1; $interval*=2) {
       my $t1 = Time::HiRes::time();
       PlackX::Framework::Util::minisleep($interval);
       my $t2 = Time::HiRes::time();

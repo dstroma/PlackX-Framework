@@ -1,13 +1,14 @@
 use v5.36;
 package PlackX::Framework::Util {
+  use PlackX::Framework::Exporter qw(import);
 
   # MD5 digests, url-encoded
   use Digest::MD5 ();
-  sub md5_ubase64         ($str) { Digest::MD5::md5_base64($str) =~ tr|+/=|-_|dr }
-  sub md5_ushort ($str, $len=16) { substr(md5_ubase64($str),0,$len)              }
+  sub md5_ubase64      ($str) { Digest::MD5::md5_base64($str) =~ tr|+/=|-_|dr }
+  sub md5_ushort ($str, $len) { substr(md5_ubase64($str),0,$len)              }
 
   # Sleep for a fractional number of seconds
-  sub minisleep       ($seconds) { select(undef, undef, undef, $seconds)         }
+  sub minisleep    ($seconds) { select(undef, undef, undef, $seconds)         }
 
   # Module util (inspired by Module::Loaded)
   sub name_to_pm         ($name) { $name =~ s|::|/|gr . '.pm'        }
@@ -17,18 +18,6 @@ package PlackX::Framework::Util {
     my $pm = name_to_pm($name);
     exists $INC{$pm} and !defined $INC{$pm}
   }
-
-  # Import
-  sub import ($class, @params) {
-    my $caller = caller(0);
-    foreach my $name (@params) {
-      warn "Do you really want to import($name)?"
-        if $name eq 'import' or $name =~ m/^_/ or $name ne lc($name);
-      no strict 'refs';
-      *{$caller . '::' . $name} = \&{$name};
-    }
-  }
-
 }
 
 1;

@@ -33,7 +33,6 @@ sub do_tests {
           # Stream remaining content
           return $response->render_stream(sub {
             do { $response->print($_); sleep 1 } for @content;
-            sleep 1;
           });
         };
       }
