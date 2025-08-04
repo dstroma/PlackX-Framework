@@ -1,5 +1,6 @@
 #!perl
 use v5.36;
+use PXF::Util ();
 
 package StreamingApp {
   use PlackX::Framework;
@@ -21,7 +22,8 @@ package StreamingApp {
       for my $i (0..5) {
         $response->print("Hello $i<br>\n");
         # Simulate a slow response with sleep
-        sleep 1;
+        # sleep 1;
+        PXF::Util::minisleep($i/10);
       }
       $response->print("</body></html>\n");
     });

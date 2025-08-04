@@ -2,6 +2,9 @@
 use v5.36;
 use Test::More;
 
+use PXF::Util ();
+our $SLEEP_TIME = 0.25;
+
 do_tests();
 done_testing();
 
@@ -32,7 +35,7 @@ sub do_tests {
 
           # Stream remaining content
           return $response->render_stream(sub {
-            do { $response->print($_); sleep 1 } for @content;
+            do { $response->print($_); PXF::Util::minisleep $SLEEP_TIME } for @content;
           });
         };
       }
@@ -51,7 +54,7 @@ sub do_tests {
     my $port = 40_000 + int(rand() * 20_000);
     my $server = run_server(port => $port, app => My::Test::App->app);
 
-    sleep 1;
+    PXF::Util::minisleep $SLEEP_TIME;
     my $data = run_client(path => '/streaming-test', %$server);
     stop_server($server);
 
@@ -66,8 +69,8 @@ sub do_tests {
     my $t_1 = $body_data[-2]->{time};
     my $elapsed = $t_2 - $t_1;
     ok(
-      ($elapsed > 0.8 and $elapsed < 1.2),
-      "Last body content lines received 1s +/- 0.2s apart (actual: ${elapsed}s)"
+      ($SLEEP_TIME*0.85 < $elapsed < $SLEEP_TIME*1.15),
+      "Last body content lines received ${SLEEP_TIME}s +/- 15% apart (actual: ${elapsed}s)"
     );
   }
 
@@ -82,7 +85,7 @@ sub do_tests {
     my $port = 40_000 + int(rand() * 20_000);
     my $server = run_server(port => $port, app => $app_no_streaming);
 
-    sleep 1;
+    PXF::Util::minisleep $SLEEP_TIME;
     my $data = run_client(path => '/streaming-test', %$server);
     stop_server($server);
 
@@ -95,10 +98,10 @@ sub do_tests {
 
     my $t_2 = $body_data[-1]->{time};
     my $t_1 = $body_data[-2]->{time};
-    my $elapsed_ms = 1000 * ($t_2 - $t_1);
+    my $elapsed = $t_2 - $t_1;
     ok(
-      ($elapsed_ms < 1),
-      "Streaming off: minimal (< 1ms) delay between body lines (actual: ${elapsed_ms}ms)"
+      ($elapsed < 0.01),
+      "Streaming off: minimal (< 0.01s) delay between body lines (actual: ${elapsed}s)"
     );
   }
 
