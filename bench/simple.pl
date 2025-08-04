@@ -180,8 +180,13 @@ Load time per app:
 =head2 Memory consumption:
 
     mojo 44.1KB
-    dan  38.5KB
-    pxf   7.0KB
+    dan2 38.5KB   (mojo -13%)
+    pxf  14.2KB   (mojo -68%) (dan2 -63%)
+    ctrl  7.1KB
+
+The control ("ctrl") is
+
+    perl -MCGI -e 'sleep'
 
 =head1 META
 
