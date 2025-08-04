@@ -16,8 +16,8 @@ use Test::More;
   ok( $response->isa('Plack::Response'));
 
   # Stop and continue
-  ok(ref $response->stop, 'Stop');
-  ok(not($response->continue), 'Continue');
+  ok(ref $response->stop,  'Stop');
+  ok(not($response->next), 'Next');
 
   # Print
   $response->print('Line 1');

@@ -5,7 +5,7 @@ package MyApp::GlobalFilters {
 
   global_filter before => sub ($request, $response) {
     $request->stash->{response_start_time} = Time::HiRes::time();
-    return $response->continue;
+    return $response->next;
   };
 
   global_filter after => sub ($request, $response) {

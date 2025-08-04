@@ -4,7 +4,7 @@ package PlackX::Framework::Response {
 
   use Plack::Util::Accessor qw(stash cleanup_callbacks template stream stream_writer);
   sub GlobalResponse ($class)            { ($class->app_namespace.'::Handler')->global_response }
-  sub continue                           { undef      }
+  sub next                               { return;    }
   sub stop                               { $_[0] || 1 }
   sub add_cleanup_callback ($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
   sub flash_cookie_name ($self)          { PlackX::Framework::flash_cookie_name($self->app_namespace) }
@@ -114,12 +114,12 @@ subroutine.
 
 =over 4
 
-=item continue()
+=item next()
 
 Syntactic sugar for returning a false value. Indicates to PlackX::Framework
 to execute the next matching route or filter.
 
-    return $response->continue; # equivalent to return;
+    return $response->next; # equivalent to return;
 
 See also the stop() method below.
 
