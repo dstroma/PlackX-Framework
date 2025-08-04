@@ -1,8 +1,7 @@
 use v5.36; # strict (5.12), warnings (5.35), signatures (5.36)
 package PlackX::Framework 0.24 {
+  use PlackX::Framework::Util qw(md5_ushort is_module_loaded is_module_broken mark_module_loaded);
   use List::Util qw(any);
-  use Module::Loaded ();
-  use Digest::MD5 ();
 
   our @plugins = ();
   sub required_modules { qw(Handler Request Response Router Router::Engine) }
@@ -22,12 +21,12 @@ package PlackX::Framework 0.24 {
       eval 'require PlackX::Framework::'.$module
         or die $@ if $required{$module};
       eval 'require '.$caller.'::'.$module or do {
-        die $@ if module_is_broken($caller.'::'.$module);
+        die $@ if is_module_broken($caller.'::'.$module);
         generate_subclass($caller.'::'.$module, 'PlackX::Framework::'.$module)
           if $required{$module} or $want_all or $want_mod->($module);
       };
       export_app_namespace_sub($caller, $module)
-        if Module::Loaded::is_loaded($caller.'::'.$module);
+        if is_module_loaded($caller.'::'.$module);
     }
   }
 
@@ -49,19 +48,13 @@ package PlackX::Framework 0.24 {
   # Helper to create a subclass and mark as loaded
   sub generate_subclass ($new_class, $parent_class) {
     eval "package $new_class; use parent '$parent_class'; 1" or die "Cannot create class: $@";
-    Module::Loaded::mark_as_loaded($new_class);
+    mark_module_loaded($new_class);
   }
 
-  # Utility functions
+  # Keep name to 16B. Memoize so we don't have compute md5 each time.
   sub flash_cookie_name ($class) {
-    # Keep name to 16B. Memoize so we don't have calculate the md5 each time.
-    state %mem;
-    $mem{$class} ||= 'flash'.substr(md5_ubase64($class),0,11);
+    state %names; $names{$class} ||= 'flash'. md5_ushort($class, 11);
   }
-
-  sub md5_ubase64      ($str) { Digest::MD5::md5_base64($str) =~ tr|+/=|-_|dr; }
-  sub module_is_broken ($mod) { my $fn = module_to_file($mod); exists $INC{$fn} and !defined $INC{$fn} }
-  sub module_to_file   ($mod) { Module::Loaded->_pm_to_file($mod) }
 }
 
 1;
