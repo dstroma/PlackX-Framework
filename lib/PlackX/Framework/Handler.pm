@@ -15,6 +15,10 @@ package PlackX::Framework::Handler {
   # App assembly section
   #
   sub build_app ($class, %options)  {
+    # Honestly, it is probably better for the user to use Plack::Builder
+    # or URLMap or Cascade instead of doing this, but we do it here for
+    # convenience in development environments, at least for now. Think about
+    # removing this feature at a later date.
     my $serve_static_files = delete $options{'serve_static_files'};
     my $static_docroot     = delete $options{'static_docroot'};
     die "Unknown options: " . join(', ', keys %options) if %options;
@@ -34,12 +38,18 @@ package PlackX::Framework::Handler {
       return $mapper->to_app;
     }
 
-    # static file app with no app_base, so try one, try the other if it's 404
+    # Static file app with no app_base, so try one, try the other if it's 404
+    # (basically our own cascade whereas we could use Plack::App::Cascade).
+    # We prefer to serve the app's 404 page if the file app also returns 404
+    # because it is easier to customize the 404 page with PXF.
+    # Add a later date we might add a feature to intercept all 4xx and 5xx
+    # error codes at the last possible moment and render a user-defined page.
     return sub ($env) {
       my $main_resp = $main_app->($env);
       return $main_resp if ref $main_resp and $main_resp->[0] != 404;
       my $file_resp = $file_app->($env);
-      return $file_resp;
+      return $file_resp if ref $file_resp and $file_resp->[0] != 404;
+      return $main_resp;
     } if $file_app;
 
     # no app_base, no static file app, just return the main app

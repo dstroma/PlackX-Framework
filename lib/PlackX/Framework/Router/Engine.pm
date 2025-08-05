@@ -61,31 +61,24 @@ package PlackX::Framework::Router::Engine {
 
   # Meta object methods - add route or global filter ##################
   sub add_route ($self, %params) {
-    my $route   = delete $params{routespec};
-    my $base    = $params{base}; # Need to keep base to compute URLs later
+    my $route   = $params{spec}; # Keep in params for later debugging
+    my $base    = $params{base}; # Keep in params to match URLs later
 
-    # Validate subroutine params
-    die 'add_route(routespec => STRING|ARRAYREF|HASHREf)'
+    # Validate % params
+    die 'add_route(spec => STRING|ARRAYREF|HASHREf)'
       unless ref $route eq 'HASH' or ref $route eq 'ARRAY' or not ref $route;
 
-    # Process hashref like
-    # { get => 'url1', post => 'url2' } or { get => ['url1', 'url2'] }
-    if (ref $route eq 'HASH') {
-      foreach my $key (keys %$route) {
-        my $paths = ref $route->{$key} ? $route->{$key} : [$route->{$key}];
-        $self->add(_path_with_base_and_method($_, $base, uc $key), \%params) for @$paths;
-      }
-      return;
+    # Coerce to hashref { verb => path } or { verb => [paths] } and parse
+    $route = { any => $route } unless ref $route eq 'HASH';
+    foreach my $key (keys %$route) {
+      my $paths = ref $route->{$key} ? $route->{$key} : [$route->{$key}];
+      my $verb  = ($key and uc($key) ne 'ANY') ? uc $key : undef;
+      $self->add(_path_with_base_and_method($_, $base, $verb), \%params) for @$paths;
     }
-
-    # String or arrayref without HTTP verb
-    $route = [$route] unless ref $route;
-    $self->add(_path_with_base_and_method($_, $base), \%params) for @$route;
-    return;
   }
 
   sub add_global_filter ($self, %params) {
-    my $when    = delete $params{'when'};
+    my $when    = delete $params{when};
     my $pattern = delete $params{pattern};
     my $action  = delete $params{action};
 
@@ -93,8 +86,7 @@ package PlackX::Framework::Router::Engine {
     die q/Usage: add_global_filter(when => 'before'|'after', ...)/
       unless $when eq 'before' or $when eq 'after';
 
-    my $prefix = $when eq 'before' ? 'pre' : 'post';
-    my $hkey   = 'global_' . $prefix . 'filters';
+    my $hkey = $when eq 'before' ? 'global_prefilters' : 'global_postfilters';
     $self->{$hkey} ||= [];
     push @{$self->{$hkey}}, { pattern => $pattern, action => $action };
   }

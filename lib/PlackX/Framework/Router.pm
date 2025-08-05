@@ -1,12 +1,13 @@
 use v5.36;
 package PlackX::Framework::Router {
   use Carp ();
+  #our $DEBUG = 0;
 
   my $local_filters = {};
   my $bases         = {};
   my $engines       = {};
   my $subnames      = eval { require Sub::Util; 1 } ? {} : undef;
-  # TODO: Store debugging info with subnames
+  #my $route_debug   = $DEBUG ? {} : undef;
 
   # Override in subclass to change the export names
   sub global_filter_request_keyword { 'global_filter' }
@@ -90,7 +91,7 @@ package PlackX::Framework::Router {
     }
 
     $engines->{$package}->add_route(
-      routespec   => $routespec,
+      spec        => $routespec,
       base        => $bases->{$package},
       prefilters  => $local_filters->{$package}{'before'},
       postfilters => $local_filters->{$package}{'after'},
@@ -105,7 +106,7 @@ package PlackX::Framework::Router {
     $options{'filter'} //= $options{'filters'};
     my $engine = ($engines->{$class} ||= $class->engine);
     $engine->add_route(
-      routespec   => $spec,
+      spec        => $spec,
       base        => $options{'base'} ? without_trailing_slash($options{'base'}) : undef,
       prefilters  => _coerce_to_arrayref_or_undef($options{'filter'}{'before'}),
       postfilters => _coerce_to_arrayref_or_undef($options{'filter'}{'after' }),
@@ -150,6 +151,11 @@ package PlackX::Framework::Router {
       my $id = $subnames->{$package}++;
       Sub::Util::set_subname($package.'::PXF-anon-route-'.$id, $action);
     }
+    #$DEBUG && do {
+    #  # Yes, we're using a subref as a string key, but oh well
+    #  $route_debug->{"$action"} //= {};
+    #  $route_debug->{"$action"}{name} = Sub::Util::subname($action) if $subnames;
+    #};
     return $action;
   }
 
