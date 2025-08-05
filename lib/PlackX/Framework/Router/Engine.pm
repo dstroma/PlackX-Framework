@@ -54,7 +54,7 @@ package PlackX::Framework::Router::Engine {
         if (!defined $pattern)
         or (ref $pattern eq 'SCALAR' and $request->destination eq $$pattern)
         or (ref $pattern eq 'Regexp' and $request->destination =~ $pattern)
-        or (substr($request->destination, 0, length $pattern) eq $pattern);
+        or (!ref $pattern and substr($request->destination, 0, length $pattern) eq $pattern);
     }
     return \@matches;
   }
