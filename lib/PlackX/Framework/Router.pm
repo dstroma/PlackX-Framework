@@ -1,8 +1,15 @@
 use v5.36;
 package PlackX::Framework::Router {
-  our $filters = {};
-  our $bases   = {};
-  our $engines = {};
+
+  my $set_subname = eval {
+    require Sub::Util;
+    !!1;
+  };
+
+  our $filters  = {};
+  our $bases    = {};
+  our $engines  = {};
+  our $subnames = {};
 
   # Override in your subclass to change the export names
   sub global_filter_request_keyword { 'global_filter' }
@@ -57,7 +64,7 @@ package PlackX::Framework::Router {
     $engines->{$package}->add_global_filter(
       'when'  => $when,
       pattern => $pattern,
-      action  => $action
+      action  => _coerce_action_to_subref($action, $package),
     );
 
     return;
@@ -134,26 +141,31 @@ package PlackX::Framework::Router {
       $action = ($action =~ m/::/) ?
         \&{ $action } : \&{ $package . '::' . $action };
     } elsif (ref $action and ref $action eq 'HASH') {
-        # TODO: Make convenience methods in Response class to shorten these
-        if (my $template = $action->{template}) {
-          $action = sub ($request, $response) {
-            $response->template->render($template);
-          };
-        } elsif (my $text = $action->{text}) {
-          $action = sub ($request, $response) {
-            $response->content_type('text/plain');
-            $response->body($text);
-            return $response;
-          };
-        } elsif (my $html = $action->{html}) {
-          $action = sub ($request, $response) {
-            $response->content_type('text/html');
-            $response->body($html);
-            return $response;
-          };
-        } else {
-          die 'unknown action specification';
-        }
+      # TODO: Make convenience methods in Response class to shorten these
+      if (my $template = $action->{template}) {
+        $action = sub ($request, $response) {
+          $response->template->render($template);
+        };
+      } elsif (my $text = $action->{text}) {
+        $action = sub ($request, $response) {
+          $response->content_type('text/plain');
+          $response->body($text);
+          return $response;
+        };
+      } elsif (my $html = $action->{html}) {
+        $action = sub ($request, $response) {
+          $response->content_type('text/html');
+          $response->body($html);
+          return $response;
+        };
+      } else {
+        die 'unknown action specification';
+      }
+    }
+    if ($set_subname and Sub::Util::subname($action) =~ m/__ANON__/) {
+      $subnames->{$package} //= 0;
+      my $id = $subnames->{$package}++;
+      Sub::Util::set_subname($package.'::PXF-Router-coderef-'.$id, $action);
     }
     return $action;
   }
@@ -260,9 +272,8 @@ Set the base URI path for all subsequent routes defined in the current package.
 =item filter before|after => sub { ... };
 
 Filter all subsequent routes. Your filter subroutine should return a false
-value to continue request processing. $response->continue is available for
-a semantic convenience. To render a response early, return the response
-object.
+value to continue request processing. $response->next is available for semantic
+convenience. To render a response early, return the response object.
 
 =item global_filter before|after => sub { ... };
 

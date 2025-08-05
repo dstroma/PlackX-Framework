@@ -9,6 +9,7 @@ requires 'List::Util';
 requires 'Scalar::Util';
 
 # Optional
+recommends 'Sub::Util' => '1.40';
 recommends 'Config::Any';
 recommends 'JSON::MaybeXS';
 recommends 'Template';

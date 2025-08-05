@@ -44,6 +44,7 @@
          "recommends" : {
             "Config::Any" : "0",
             "JSON::MaybeXS" : "0",
+            "Sub::Util" : "1.40",
             "Template" : "0",
             "URI::Fast" : "0"
          },
