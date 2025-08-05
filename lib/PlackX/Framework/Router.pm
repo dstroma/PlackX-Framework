@@ -1,32 +1,32 @@
 use v5.36;
 package PlackX::Framework::Router {
+  use Carp ();
 
-  my $set_subname = eval {
-    require Sub::Util;
-    !!1;
-  };
+  my $local_filters = {};
+  my $bases         = {};
+  my $engines       = {};
+  my $subnames      = eval { require Sub::Util; 1 } ? {} : undef;
+  # TODO: Store debugging info with subnames
 
-  our $filters  = {};
-  our $bases    = {};
-  our $engines  = {};
-  our $subnames = {};
-
-  # Override in your subclass to change the export names
+  # Override in subclass to change the export names
   sub global_filter_request_keyword { 'global_filter' }
   sub filter_request_keyword        { 'filter' }
   sub route_request_keyword         { 'route'  }
   sub uri_base_keyword              { 'base'   }
 
+  # This module exports the routing DSL and parses routes and filters
+  # The engine is what stores the routes and performs matching
   sub engine ($class) { ($class.'::Engine')->instance; }
 
+  # Export the DSL
   sub import ($class, @extra) {
     my $export_to = caller(0);
 
-    # Trap errors
-    die "You must import from your app's subclass of PlackX::Framework::Router, not directly"
+    die "You must import from your app's subclass, not directly from ".__PACKAGE__
       if $class eq __PACKAGE__;
 
     # Remember which controller is using which router engine object
+    # This is needed if PXF is being used for multiple different apps
     $engines->{$export_to} = $class->engine;
 
     # Export
@@ -37,21 +37,13 @@ package PlackX::Framework::Router {
     }
   }
 
-  sub DSL_filter_request ($when, $action, @slurp) {
+  # DSL functions
+  sub DSL_uri_base ($base) {
     my ($package) = caller;
-
-    die "usage: filter ('before' || 'after') => sub {}"
-      unless $when eq 'before' or $when eq 'after';
-
-    _add_filter($package, $when, {
-      action     => _coerce_action_to_subref($action, $package),
-      controller => $package,
-      'when'     => $when,
-      params     => \@slurp
-    });
-    return;
+    $bases->{$package} = without_trailing_slash($base);
   }
 
+  # We handle local filters in this module, but the engine handles global ones
   sub DSL_global_filter_request {
     my ($package) = caller;
     my $when    = shift;
@@ -62,12 +54,25 @@ package PlackX::Framework::Router {
       unless $when eq 'before' or $when eq 'after';
 
     $engines->{$package}->add_global_filter(
-      'when'  => $when,
+      when    => $when,
       pattern => $pattern,
       action  => _coerce_action_to_subref($action, $package),
     );
+  }
 
-    return;
+  sub DSL_filter_request ($when, $action, @slurp) {
+    my ($package) = caller;
+
+    die "usage: filter ('before' || 'after') => sub {}"
+      unless $when eq 'before' or $when eq 'after';
+
+    $local_filters->{$package}{$when} ||= [];
+    push $local_filters->{$package}{$when}->@*, {
+      controller => $package,
+      when       => $when,
+      action     => _coerce_action_to_subref($action, $package),
+      params     => \@slurp
+    };
   }
 
   sub DSL_route_request (@args) {
@@ -80,39 +85,31 @@ package PlackX::Framework::Router {
 
     if (@args) {
       my $verb = $routespec;
-      $verb    = join('|', @$verb) if ref $verb;
-      $routespec = shift @args;
-      die 'incorrect usage' if ref $routespec;
-      $routespec  = { $verb => $routespec };
+      my $path = shift @args;
+      $routespec = { $verb => $path };
     }
 
     $engines->{$package}->add_route(
       routespec   => $routespec,
       base        => $bases->{$package},
-      prefilters  => _get_filters($package, 'before'),
+      prefilters  => $local_filters->{$package}{'before'},
+      postfilters => $local_filters->{$package}{'after'},
       action      => _coerce_action_to_subref($action, $package),
-      postfilters => _get_filters($package, 'after'),
     );
-    return;
   }
 
-  sub DSL_uri_base ($base) {
-    my ($package) = caller;
-    $bases->{$package} = _remove_trailing_slash($base);
-    return;
-  }
-
-  # Class method-style (currently does not support base or filters) ###########
+  # Class method-style
+  # (does not support base or local filters unless they are explicitly specified each time)
   sub add_route ($class, $spec, $action, %options) {
     my ($package) = caller;
     $options{'filter'} //= $options{'filters'};
     my $engine = ($engines->{$class} ||= $class->engine);
     $engine->add_route(
       routespec   => $spec,
-      base        => $options{'base'}   ? _remove_trailing_slash($options{'base'}) : undef,
+      base        => $options{'base'} ? without_trailing_slash($options{'base'}) : undef,
       prefilters  => _coerce_to_arrayref_or_undef($options{'filter'}{'before'}),
-      action      => _coerce_action_to_subref($action, $package),
       postfilters => _coerce_to_arrayref_or_undef($options{'filter'}{'after' }),
+      action      => _coerce_action_to_subref($action, $package),
     );
   }
 
@@ -121,63 +118,45 @@ package PlackX::Framework::Router {
     my $action  = pop @args;
     my $pattern = shift @args // undef;
     $class->engine->add_global_filter(
-      'when'  => $when,
+      when    => $when,
       $pattern ? (pattern => $pattern) : (),
       action  => $action
     );
   }
 
-  # Helpers ###################################################################
-  sub _remove_trailing_slash ($uri) { substr($uri, -1, 1) eq '/' ? substr($uri, 0, -1) : $uri }
-  sub _get_filters ($class, $when)  { $filters->{$class}{$when} }
-
-  sub _add_filter ($class, $when, $spec) {
-    $filters->{$class}{$when} ||= [];
-    push @{   $filters->{$class}{$when}   }, $spec;
+  # Helpers and private methods
+  sub without_trailing_slash ($uri) {
+    substr($uri, -1, 1) eq '/' ? substr($uri, 0, -1) : $uri
   }
 
   sub _coerce_action_to_subref ($action, $package) {
     if (not ref $action) {
+      # Subroutine name as action - currently dead code path, maybe bring back
       $action = ($action =~ m/::/) ?
         \&{ $action } : \&{ $package . '::' . $action };
     } elsif (ref $action and ref $action eq 'HASH') {
-      # TODO: Make convenience methods in Response class to shorten these
       if (my $template = $action->{template}) {
-        $action = sub ($request, $response) {
-          $response->template->render($template);
-        };
+        $action = sub ($req, $rsp) { $rsp->render_template($template) };
       } elsif (my $text = $action->{text}) {
-        $action = sub ($request, $response) {
-          $response->content_type('text/plain');
-          $response->body($text);
-          return $response;
-        };
+        $action = sub ($req, $rsp) { $rsp->render_text($text) };
       } elsif (my $html = $action->{html}) {
-        $action = sub ($request, $response) {
-          $response->content_type('text/html');
-          $response->body($html);
-          return $response;
-        };
+        $action = sub ($req, $rsp) { $rsp->render_html($html) };
       } else {
-        die 'unknown action specification';
+        Carp::confess 'Invalid router action, expected subref or hashref with key template, text, or html';
       }
     }
-    if ($set_subname and Sub::Util::subname($action) =~ m/__ANON__/) {
+    if (defined $subnames and Sub::Util::subname($action) =~ m/__ANON__/) {
       $subnames->{$package} //= 0;
       my $id = $subnames->{$package}++;
-      Sub::Util::set_subname($package.'::PXF-Router-coderef-'.$id, $action);
+      Sub::Util::set_subname($package.'::PXF-anon-route-'.$id, $action);
     }
     return $action;
   }
 
   sub _coerce_to_arrayref_or_undef ($val) {
-    if (ref $val eq 'ARRAY' and @$val > 0) {
-      return $val;
-    } elsif (defined $val) {
-      return [$val];
-    } else {
-      return undef;
-    }
+    return  $val  if ref $val eq 'ARRAY' and @$val > 0;
+    return [$val] if defined $val;
+    return undef;
   }
 }
 
