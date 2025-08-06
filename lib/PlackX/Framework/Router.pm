@@ -1,13 +1,11 @@
 use v5.36;
 package PlackX::Framework::Router {
   use Carp ();
-  #our $DEBUG = 0;
 
   my $local_filters = {};
   my $bases         = {};
   my $engines       = {};
   my $subnames      = eval { require Sub::Util; 1 } ? {} : undef;
-  #my $route_debug   = $DEBUG ? {} : undef;
 
   # Override in subclass to change the export names
   sub global_filter_request_keyword { 'global_filter' }
@@ -47,9 +45,9 @@ package PlackX::Framework::Router {
   # We handle local filters in this module, but the engine handles global ones
   sub DSL_global_filter_request {
     my ($package) = caller;
-    my $when    = shift;
-    my $action  = pop;
-    my $pattern = @_ ? shift : undef;
+    my $when      = shift;
+    my $action    = pop;
+    my $pattern   = @_ ? shift : undef;
 
     die "usage: global_filter ('before' || 'after') => sub {}"
       unless $when eq 'before' or $when eq 'after';
@@ -57,11 +55,11 @@ package PlackX::Framework::Router {
     $engines->{$package}->add_global_filter(
       when    => $when,
       pattern => $pattern,
-      action  => _coerce_action_to_subref($action, $package),
+      action  => coerce_action_to_subref($action, $package),
     );
   }
 
-  sub DSL_filter_request ($when, $action, @slurp) {
+  sub DSL_filter_request ($when, $action) {
     my ($package) = caller;
 
     die "usage: filter ('before' || 'after') => sub {}"
@@ -71,31 +69,30 @@ package PlackX::Framework::Router {
     push $local_filters->{$package}{$when}->@*, {
       controller => $package,
       when       => $when,
-      action     => _coerce_action_to_subref($action, $package),
-      params     => \@slurp
+      action     => coerce_action_to_subref($action, $package),
     };
   }
 
   sub DSL_route_request (@args) {
     my ($package) = caller;
+    my $spec      = shift @args;
     my $action    = pop @args;
-    my $routespec = shift @args;
 
     die 'expected coderef or hash as last argument'
       unless ref $action and (ref $action eq 'CODE' or ref $action eq 'HASH');
 
     if (@args) {
-      my $verb = $routespec;
+      my $verb = $spec;
       my $path = shift @args;
-      $routespec = { $verb => $path };
+      $spec = { $verb => $path };
     }
 
     $engines->{$package}->add_route(
-      spec        => $routespec,
+      spec        => $spec,
       base        => $bases->{$package},
       prefilters  => $local_filters->{$package}{'before'},
       postfilters => $local_filters->{$package}{'after'},
-      action      => _coerce_action_to_subref($action, $package),
+      action      => coerce_action_to_subref($action, $package),
     );
   }
 
@@ -108,9 +105,9 @@ package PlackX::Framework::Router {
     $engine->add_route(
       spec        => $spec,
       base        => $options{'base'} ? without_trailing_slash($options{'base'}) : undef,
-      prefilters  => _coerce_to_arrayref_or_undef($options{'filter'}{'before'}),
-      postfilters => _coerce_to_arrayref_or_undef($options{'filter'}{'after' }),
-      action      => _coerce_action_to_subref($action, $package),
+      prefilters  => coerce_to_arrayref_or_undef($options{'filter'}{'before'}),
+      postfilters => coerce_to_arrayref_or_undef($options{'filter'}{'after' }),
+      action      => coerce_action_to_subref($action, $package),
     );
   }
 
@@ -130,36 +127,30 @@ package PlackX::Framework::Router {
     substr($uri, -1, 1) eq '/' ? substr($uri, 0, -1) : $uri
   }
 
-  sub _coerce_action_to_subref ($action, $package) {
+  sub coerce_action_to_subref ($action, $package) {
     if (not ref $action) {
-      # Subroutine name as action - currently dead code path, maybe bring back
-      $action = ($action =~ m/::/) ?
-        \&{ $action } : \&{ $package . '::' . $action };
-    } elsif (ref $action and ref $action eq 'HASH') {
-      if (my $template = $action->{template}) {
-        $action = sub ($req, $rsp) { $rsp->render_template($template) };
-      } elsif (my $text = $action->{text}) {
-        $action = sub ($req, $rsp) { $rsp->render_text($text) };
-      } elsif (my $html = $action->{html}) {
-        $action = sub ($req, $rsp) { $rsp->render_html($html) };
-      } else {
-        Carp::confess 'Invalid router action, expected subref or hashref with key template, text, or html';
-      }
+      # String with subroutine name--currently dead code path, maybe bring back
+      $action = ($action =~ m/::/) ? \&{$action} : \&{$package.'::'.$action};
+    } elsif (ref $action eq 'HASH') {
+      Carp::confess 'Invalid router action, expected subref, or hashref with 1 key'
+        unless scalar keys %$action == 1;
+      # Shortcut to response->render_X
+      $action = sub ($request, $response) { $response->render(%$action) };
+    } elsif (ref $action ne 'CODE') {
+      Carp::confess 'Invalid router action, expected subref, or hashref with 1 key'
     }
+
+    # Helpful for Debugging
     if (defined $subnames and Sub::Util::subname($action) =~ m/__ANON__/) {
       $subnames->{$package} //= 0;
       my $id = $subnames->{$package}++;
       Sub::Util::set_subname($package.'::PXF-anon-route-'.$id, $action);
     }
-    #$DEBUG && do {
-    #  # Yes, we're using a subref as a string key, but oh well
-    #  $route_debug->{"$action"} //= {};
-    #  $route_debug->{"$action"}{name} = Sub::Util::subname($action) if $subnames;
-    #};
+
     return $action;
   }
 
-  sub _coerce_to_arrayref_or_undef ($val) {
+  sub coerce_to_arrayref_or_undef ($val) {
     return  $val  if ref $val eq 'ARRAY' and @$val > 0;
     return [$val] if defined $val;
     return undef;

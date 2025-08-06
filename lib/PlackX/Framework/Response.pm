@@ -67,15 +67,18 @@ package PlackX::Framework::Response {
     return $self;
   }
 
+  sub render ($self, $type, @params) {
+    if (my $sub = $self->can("render_$type")) {
+      return $sub->($self, @params);
+    }
+    die "$self does not know how to render_$type";
+  }
+
   sub encode_json ($data) {
     return $data unless ref $data;
     require JSON::MaybeXS;
     state $json_codec = JSON::MaybeXS->new(utf8 => 1);
     return $json_codec->encode($data);
-  }
-
-  sub uri_for ($path) {
-    # Get base
   }
 }
 
