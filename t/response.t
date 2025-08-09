@@ -24,6 +24,11 @@ use Test::More;
   # Charset then Content type
   {
     my $response = PlackX::Framework::Response->new;
+    is_deeply(
+      [$response->content_type] => [''],
+      'Empty content_type upon new()'
+    );
+
     $response->charset('abc');
     is(
       $response->charset => 'abc',
