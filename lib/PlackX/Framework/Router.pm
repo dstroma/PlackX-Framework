@@ -135,7 +135,8 @@ package PlackX::Framework::Router {
       Carp::confess 'Invalid router action, expected subref, or hashref with 1 key'
         unless scalar keys %$action == 1;
       # Shortcut to response->render_X
-      $action = sub ($request, $response) { $response->render(%$action) };
+      my %render_params = %$action;
+      $action = sub ($request, $response) { $response->render(%render_params) };
     } elsif (ref $action ne 'CODE') {
       Carp::confess 'Invalid router action, expected subref, or hashref with 1 key'
     }

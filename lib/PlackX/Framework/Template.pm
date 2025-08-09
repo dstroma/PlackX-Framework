@@ -48,24 +48,36 @@ package PlackX::Framework::Template {
     $engine = $class->get_engine() unless $engine;
     die 'No valid template engine object' unless $engine and ref $engine;
 
-    return bless { engine => $engine, params => {}, response => $response }, $class;
+    my $self = bless { engine => $engine, params => {}, response => $response }, $class;
+    $self->set_defaults;
+    return $self;
   }
 
-  sub output ($self, $file = undef, $params = undef) {
+  sub output ($self, $file = undef, $params = undef, $output_to = undef) {
+    $self->before_output;
+    $output_to //= $self->{response};
+    $file      //= $self->{filename};
     $self->set_params(%$params) if $params and ref $params eq 'HASH';
-    $file //= $self->{filename};
-    $self->{engine}->process($file, $self->{params}, $self->{response})
+    $self->{engine}->process($file, $self->{params}, $output_to)
       or die 'Template engine process() method failed.' . (
         $self->{engine}->can('error') ? ' '.$self->{engine}->error : ''
       );
   }
 
+  sub output_as_string ($self, $file, $params) {
+    my $str = '';
+    $self->output($file, $params, \$str);
+    return $str;
+  }
+
+  sub set_defaults                  { } # hook for user extension
+  sub before_output                 { } # hook for user extension
   sub self_to_class ($self)         { ref $self ? ref $self : $self }
   sub get_engine ($self)            { $engine_objects{self_to_class $self} }
   sub set_engine ($self, $new)      { $engine_objects{self_to_class $self} = $new }
-  sub set_filename ($self, $fname)  { $self->{filename} = $fname }
   sub get_param ($self, $name)      { $self->{params}{$name}     }
   sub set_params ($self, %params)   { @{$self->{params}}{keys %params} = values %params; $self }
+  sub set_filename ($self, $fname)  { $self->{filename} = $fname }
   sub render ($self, @args)         { $self->output(@args); $self->{response} }
   *set = \&set_params;
   *use = \&set_filename;

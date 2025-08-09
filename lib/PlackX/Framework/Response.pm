@@ -60,6 +60,11 @@ package PlackX::Framework::Response {
     return $self->flash($flashval)->redirect($url, 303);
   }
 
+  sub redirect ($self, $url, $code=303) {
+    $self->SUPER::redirect($url, $code);
+    return $self;
+  }
+
   sub render_content ($self, $content_type, $content) {
     $self->status(200);
     $self->content_type($content_type);
