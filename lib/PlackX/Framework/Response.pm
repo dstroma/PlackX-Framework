@@ -22,23 +22,38 @@ package PlackX::Framework::Response {
     return bless $self, $class;
   }
 
+  sub set_defaults ($self) {
+    $self->charset('utf8');
+    $self->content_type('text/html');
+    $self->status(200);
+    return $self;
+  }
+
   sub charset ($self, $newval=undef) {
-    $self->{charset} //= $newval if defined $newval;
-    $self->content_type          if defined $newval;
+    if (!defined $newval) {
+      my (@conttype) = $self->SUPER::content_type;
+      foreach my $el (@conttype) {
+        $newval = $1 if $el =~ m/^charset=(.*)$/;
+      }
+    }
+    if (defined $newval) {
+      $self->{charset} = $newval;
+      $self->content_type;
+    }
     return $self->{charset};
   }
 
   sub content_type ($self, $newval=undef) {
     return $self->SUPER::content_type(defined $newval ? $newval : ())
-      unless $self->{charset};
+      if !$self->{charset} or ($newval and $newval =~ m/charset=/i);
 
     # The way content_type is handled by HTTP::Headers(::Fast) is a bit weird.
     # The getter returns an array with the elements split up.
     # But the setter won't take an array, only a string.
     my (@ct) = defined $newval ? ($newval,) : ($self->SUPER::content_type,);
-    if (@ct and not grep { $_ =~ m/^charset=/ } @ct) {
-      push @ct, 'charset='.$self->{charset};
-    }
+    @ct = grep { $_ !~ m/^charset=/i } @ct;
+    push @ct, 'charset='.$self->{charset};
+
     return $self->SUPER::content_type(join '; ', @ct);
   }
 
@@ -142,6 +157,16 @@ subroutine.
 
 =over 4
 
+=item charset(), charset($newval)
+
+Get or set the charset portion of the content-type header.
+
+=item content_type(), content_type($newval)
+
+Like Plack::Response, this is a shortcut for HTTP::Headers::Fast->content_type;
+however, if a charset has been set with the charset() method, it will add the
+charset to the content-type header, if no charset is specified in $newval.
+
 =item next()
 
 Syntactic sugar for returning a false value. Indicates to PlackX::Framework
@@ -222,6 +247,11 @@ Shortcut for template->render(@ags)
 =item render_text($string)
 
 Sets the content-type to text/plain and sets the response body to $string.
+
+=item set_defaults()
+
+Set defaults for the response object. This method is called automatically by
+PlackX::Framework::Handler.
 
 =item stash(), stash($hashref)
 

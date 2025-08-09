@@ -71,7 +71,7 @@ package PlackX::Framework::Handler {
     # Get or create default request and response objects
     my $env      = $class->env_or_req_to_env($env_or_req);
     my $request  = $class->env_or_req_to_req($env_or_req);
-    my $response = $maybe_resp || ($app_namespace . '::Response')->new(200);
+    my $response = $maybe_resp || ($app_namespace . '::Response')->new->set_defaults;
 
     # Memoize server info and maybe set request/response globals
     $psgix_streaming = $env->{'psgi.streaming'} ? !!1 : !!0
@@ -98,7 +98,6 @@ package PlackX::Framework::Handler {
 
     # Clear flash if set, set response defaults, and route request
     $response->flash(undef) if $request->flash;
-    $response->content_type('text/html');
     return $class->route_request($request, $response);
   }
 

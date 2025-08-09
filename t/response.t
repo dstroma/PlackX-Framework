@@ -21,60 +21,41 @@ use Test::More;
     ok(not($response->next), 'Next');
   }
 
-=pod
-
-  {
-    require HTTP::Headers;
-    my $headers = HTTP::Headers->new;
-    $headers->content_type('text/test2; charset=zxywv');
-    $headers->content_type_charset('abcdefg');
-    #$headers->header('Content-Type' => 'text/test; charset=abc');
-    say 'HTTP::Headers::Fast -- ' . $headers->header('Content-Type');
-    say 'HTTP::Headers::Fast -- ' . join('; ', $headers->content_type);
-    say 'HTTP::Headers::Fast -- ' . $headers->content_type_charset;
-    use Data::Dumper;
-    #say Dumper { headers_fast => $headers };
-  }
-
-  # Content type and charset
-  {
-    my $response = Plack::Response->new;
-    $response->content_type('text/test; charset=abc');
-    $response->content_type_charset('abc');
-    say "$response content_type                 -- " . $response->content_type;
-    say "$response headers->content_type        -- " . $response->headers->content_type;
-    say "$response headers->header->header(...) -- " . $response->headers->header('Content-Type');
-    say Dumper { response => $response };
-    my @vals = $response->content_type;
-    say scalar @vals;
-    say $_ for @vals;
-    is(
-      $response->content_type => 'text/test; charset=abc',
-      'Set charset then content-type'
-    );
-  }
-
-=cut
-
   # Charset then Content type
   {
     my $response = PlackX::Framework::Response->new;
     $response->charset('abc');
+    is(
+      $response->charset => 'abc',
+      'Charset set successfully (before content_type)'
+    );
+
     $response->content_type('text/test');
     is_deeply(
       [$response->headers->content_type] => ['text/test', 'charset=abc'],
       'Set charset then content-type'
+    );
+
+    # Set charset with content_type overrides earlier charset() call
+    $response->content_type('text/test2; charset=def');
+    is_deeply(
+      [$response->headers->content_type] => ['text/test2', 'charset=def'],
+      'Content_type is correct after setting content-type then charset'
     );
   }
 
   # Content-type then charset
   {
     my $response = PlackX::Framework::Response->new;
-    $response->content_type('text/test2');
-    $response->charset('def');
+    $response->content_type('text/test3; charset=hij');
+    $response->charset('klm');
+    is(
+      $response->charset => 'klm',
+      'Charset set successfully (after content-type)'
+    );
     is_deeply(
-      [$response->headers->content_type] => ['text/test2', 'charset=def'],
-      'Set content-type then charset'
+      [$response->headers->content_type] => ['text/test3', 'charset=klm'],
+      'Content_type is correct after setting content-type then charset'
     );
   }
 

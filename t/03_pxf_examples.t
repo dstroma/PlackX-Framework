@@ -36,7 +36,7 @@ sub do_tests {
     );
 
     is_deeply(
-      $response->[1] => ['Content-Type', 'text/html'],
+      $response->[1] => ['Content-Type', 'text/html; charset=utf8'],
       'response content-type correct'
     );
 
@@ -100,7 +100,7 @@ sub do_tests {
     );
 
     is_deeply(
-      $response->[1] => ['Content-Type', 'text/html'],
+      $response->[1] => ['Content-Type', 'text/html; charset=utf8'],
       'response content-type correct'
     );
 
