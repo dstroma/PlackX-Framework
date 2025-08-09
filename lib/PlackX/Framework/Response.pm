@@ -13,7 +13,7 @@ package PlackX::Framework::Response {
   sub render_html         ($self, $html) { $self->render_content('text/html',        $html             ) }
   sub render_stream       ($self, $code) { $self->stream($code); $self                                   }
   sub render_template     ($self, @args) { $self->{template}->render(@args); $self                       }
-  sub finalize                   ($self) { $self->stream ? $self->finalize_s : $self->SUPER::finalize    }
+  sub finalize                   ($self) { $self->stream ? $self->finalize_sb : $self->SUPER::finalize   }
 
   sub new ($class, @args) {
     my $self = $class->SUPER::new(@args);
@@ -57,8 +57,8 @@ package PlackX::Framework::Response {
     return $self->SUPER::content_type(join '; ', @ct);
   }
 
-  sub finalize_s ($self) {
-    # Finalize for streaming
+  sub finalize_sb ($self) {
+    # Finalize Streaming Body
     my $original_body = $self->body;
     $self->body(undef);
     my $aref = $self->SUPER::finalize;

@@ -175,7 +175,7 @@ package PlackX::Framework::Handler {
       if not $resp->can('stream') or not $resp->stream;
 
     return sub ($PSGI_responder) {
-      my $PSGI_writer = $PSGI_responder->($resp->finalize_s);
+      my $PSGI_writer = $PSGI_responder->($resp->finalize_sb);
       $resp->stream_writer($PSGI_writer);
       $resp->stream->();
       $PSGI_writer->close;
