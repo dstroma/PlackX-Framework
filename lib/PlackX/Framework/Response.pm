@@ -22,6 +22,26 @@ package PlackX::Framework::Response {
     return bless $self, $class;
   }
 
+  sub charset ($self, $newval=undef) {
+    $self->{charset} //= $newval if defined $newval;
+    $self->content_type          if defined $newval;
+    return $self->{charset};
+  }
+
+  sub content_type ($self, $newval=undef) {
+    return $self->SUPER::content_type(defined $newval ? $newval : ())
+      unless $self->{charset};
+
+    # The way content_type is handled by HTTP::Headers(::Fast) is a bit weird.
+    # The getter returns an array with the elements split up.
+    # But the setter won't take an array, only a string.
+    my (@ct) = defined $newval ? ($newval,) : ($self->SUPER::content_type,);
+    if (@ct and not grep { $_ =~ m/^charset=/ } @ct) {
+      push @ct, 'charset='.$self->{charset};
+    }
+    return $self->SUPER::content_type(join '; ', @ct);
+  }
+
   sub finalize_s ($self) {
     # Finalize for streaming
     my $original_body = $self->body;
