@@ -55,8 +55,6 @@ Use a PlackX::Framework::Request object to find a matching route. The return
 value shall be undef or false if no match is found. If a match is found, a
 hashref should be returned. The hashref should contain the following keys:
 
-=over 4
-
 =item route_parameters
 
 A hashref of route parameters that were collected during the route match. If
@@ -74,14 +72,10 @@ in the same order in which they were added, except that global prefilters
 should come before local prefilters, and global postfilters should come
 after local postfilters.
 
-=back
-
 =item $engine->add_route(...)
 
 Add a route. Accepted parameters should be a list of key-value pairs with the
 following keys:
-
-=over 4
 
 =item spec
 
@@ -106,14 +100,10 @@ An arrayref of local (package-scoped) prefilters.
 
 An arrayref of local (package-scoped) postfilters.
 
-=back
-
 =item $obj->add_global_filter(...)
 
 Add a global filter. Parameters should be a list of key-value pairs with the following
 keys:
-
-=over 4
 
 =item when
 

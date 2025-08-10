@@ -7,7 +7,7 @@ package PlackX::Framework::Response {
   sub next                               { return;    }
   sub stop                               { $_[0] || 1 }
   sub add_cleanup_callback ($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
-  sub flash_cookie_name ($self)          { PlackX::Framework::flash_cookie_name($self->app_namespace) }
+  sub flash_cookie_name          ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace)    }
   sub render_json         ($self, $data) { $self->render_content('application/json', encode_json($data)) }
   sub render_text         ($self, $text) { $self->render_content('text/plain',       $text             ) }
   sub render_html         ($self, $html) { $self->render_content('text/html',        $html             ) }
@@ -167,15 +167,6 @@ Like Plack::Response, this is a shortcut for HTTP::Headers::Fast->content_type;
 however, if a charset has been set with the charset() method, it will add the
 charset to the content-type header, if no charset is specified in $newval.
 
-=item next()
-
-Syntactic sugar for returning a false value. Indicates to PlackX::Framework
-to execute the next matching route or filter.
-
-    return $response->next; # equivalent to return;
-
-See also the stop() method below.
-
 =item flash(value)
 
 Sets the flash cookie to the value specified, or clears it if the value is
@@ -185,6 +176,15 @@ you set a different one.
 =item flash_redirect(value, url)
 
 Combines flash(value) and redirect(url) with a 303 (SEE OTHER) response code.
+
+=item next()
+
+Syntactic sugar for returning a false value. Indicates to PlackX::Framework
+to execute the next matching filter.
+
+    return $response->next; # equivalent to return;
+
+See also the stop() method below.
 
 =item no_cache(BOOL)
 
@@ -216,6 +216,19 @@ Or override print in your subclass:
       }
     }
 
+=item redirect($url, $http_status)
+
+Like Plack::Response->redirect, except the default http status is 303 See Other
+instead of 302 Found. This matches the more common type of redirect in a web
+app, which is directing the user to another page after a prevous request was
+processed (such as a log in form).
+
+=item render($key => @values)
+
+An alias for $obj->render_$key(@values). For example, instead of calling
+render_html(...), you could call render(html => ...). Used by PXF's Router
+module to implement shortcuts to the appropriate $response->render_*() method.
+
 =item render_html($string)
 
 Sets the content-type to text/html and sets the response body to $string.
@@ -242,7 +255,7 @@ Example:
 
 =item render_template(@args)
 
-Shortcut for template->render(@ags)
+Shortcut for $obj->template->render(@ags)
 
 =item render_text($string)
 
@@ -279,8 +292,11 @@ Example:
 =item stop()
 
 Syntactic sugar for returning the object itself. Indicates to PlackX::Framework
-that it should render the response.
+that it should render the response. Useful for semantics in filter actions. The
+default router engine does not support multiple matching routes, so not so
+useful in route actions. See also the equivalent inverse method, next().
 
+    # In a filter
     return $response->stop; # equivalent to return $response;
 
 =item template()

@@ -103,7 +103,7 @@ of URI::Fast with extra features for manipulating query strings, namely setting,
 adding, or deleting parameters; and creating absolute URLs from relative ones.
 
 
-=head 2 Rationale
+=head2 Rationale
 
 While it is true the URI module does offer URI::QueryParam which can add similar
 features, that module was designed to replicate the CGI.pm interface. This one
@@ -184,3 +184,6 @@ None.
 =item URI::QueryParam
 
 =item Rose::URI
+
+=back
+
