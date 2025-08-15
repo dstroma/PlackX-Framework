@@ -19,8 +19,8 @@ package PlackX::Framework::Request {
   sub cgi_param   ($self, $key) { $self->SUPER::param($key)        } # CGI.pm compatibile
   sub route_param ($self, $key) { $self->{route_parameters}{$key}  }
   sub stash_param ($self, $key) { $self->{stash}{$key}             }
-  sub abs_to      ($self, $pth) { $self->base . with_leadslash($pth)          }
-  sub rel_to      ($self, $pth) { $self->abs_to($pth) =~ s|^https?://.+?/||ir }
+  sub abs_to      ($self, $pth) { $self->base . with_leadslash($pth)           }
+  sub rel_to      ($self, $pth) { $self->abs_to($pth) =~ s|^https?://.+?/|/|ir }
   sub urix              ($self) { ($self->app_namespace.'::URIx')->new_from_pxfrequest($self) }
   sub with_leadslash     ($uri) { substr($uri, 0, 1) eq '/' ? $uri : '/'.$uri }
   *uri_to = \&abs_to;
