@@ -13,7 +13,6 @@ package PlackX::Framework::Request {
   sub is_delete         ($self) { uc $self->method eq 'DELETE' }
   sub is_ajax           ($self) { uc($self->header('X-Requested-With') || '') eq 'XMLHTTPREQUEST' }
   sub destination       ($self) { $self->{destination} // $self->path        }
-  sub flash             ($self) { $self->cookies->{$self->flash_cookie_name} }
   sub flash_cookie_name ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace) }
   sub param       ($self, $key) { scalar $self->parameters->{$key} } # faster than scalar $self->param($key)
   sub cgi_param   ($self, $key) { $self->SUPER::param($key)        } # CGI.pm compatibile
@@ -46,6 +45,17 @@ package PlackX::Framework::Request {
 
     return $self;
   }
+
+  # Maybe decode the flash from b64 json
+  sub flash ($self) {
+    my $cname   = $self->flash_cookie_name;
+    my $content = $self->cookies->{$cname};
+    my $prefix  = "$cname-ju64-";
+    return PXF::Util::decode_ju64(substr($content, length($prefix)))
+      if $content and substr($content, 0, length($prefix)) eq $prefix;
+    return $content;
+  }
+
 }
 
 1;

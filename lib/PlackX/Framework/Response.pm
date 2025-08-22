@@ -1,19 +1,20 @@
 use v5.36;
 package PlackX::Framework::Response {
   use parent 'Plack::Response';
+  use PXF::Util ();
 
   use Plack::Util::Accessor qw(stash cleanup_callbacks template stream stream_writer);
-  sub GlobalResponse ($class)            { ($class->app_namespace.'::Handler')->global_response }
-  sub next                               { return;    }
-  sub stop                               { $_[0] || 1 }
-  sub add_cleanup_callback ($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
-  sub flash_cookie_name          ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace)    }
-  sub render_json         ($self, $data) { $self->render_content('application/json', encode_json($data)) }
-  sub render_text         ($self, $text) { $self->render_content('text/plain',       $text             ) }
-  sub render_html         ($self, $html) { $self->render_content('text/html',        $html             ) }
-  sub render_stream       ($self, $code) { $self->stream($code); $self                                   }
-  sub render_template     ($self, @args) { $self->{template}->render(@args); $self                       }
-  sub finalize                   ($self) { $self->stream ? $self->finalize_sb : $self->SUPER::finalize   }
+  sub GlobalResponse ($class)           { ($class->app_namespace.'::Handler')->global_response }
+  sub next                              { return;    }
+  sub stop                              { $_[0] || 1 }
+  sub add_cleanup_callback($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
+  sub flash_cookie_name         ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace)  }
+  sub render_json         ($self, $dat) { $self->render_content('application/json', PXF::Util::encode_ju64($dat)) }
+  sub render_text         ($self, $str) { $self->render_content('text/plain'      , $str            ) }
+  sub render_html         ($self, $str) { $self->render_content('text/html'       , $str            ) }
+  sub render_stream       ($self, $sub) { $self->stream($sub); $self                                  }
+  sub render_template     ($self, @ops) { $self->{template}->render(@ops); $self                      }
+  sub finalize                  ($self) { $self->stream ? $self->finalize_sb : $self->SUPER::finalize }
 
   sub new ($class, @args) {
     my $self = $class->SUPER::new(@args);
@@ -84,10 +85,15 @@ package PlackX::Framework::Response {
   }
 
   sub flash ($self, $value = undef) {
-    # Values are automatically encoded by Cookie::Baker
+    # Note: String values are automatically url-encoded by Cookie::Baker
+    # If value is false we delete the cookie, so set max-age negative
+    # Otherwise set it to 20 minutes (it will be deleted on next request)
+    my $max_age = $value ? 60*20 : -1;
+    my $cname   = $self->flash_cookie_name;
     $value //= '';
-    my $max_age = $value ? 300 : -1; # If value is false we delete the cookie
-    $self->cookies->{$self->flash_cookie_name} = { value=>$value, path=>'/', 'max-age'=>$max_age, samesite=>'strict' };
+
+    $value = "$cname-ju64-" . PXF::Util::encode_ju64($value) if ref $value;
+    $self->cookies->{$cname} = { value=>$value, path=>'/', 'max-age'=>$max_age, samesite=>'strict' };
     return $self;
   }
 
@@ -112,13 +118,6 @@ package PlackX::Framework::Response {
       return $sub->($self, @params);
     }
     die "$self does not know how to render_$type";
-  }
-
-  sub encode_json ($data) {
-    return $data unless ref $data;
-    require JSON::MaybeXS;
-    state $json_codec = JSON::MaybeXS->new(utf8 => 1);
-    return $json_codec->encode($data);
   }
 }
 

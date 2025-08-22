@@ -1,7 +1,9 @@
 use v5.36;
 package PXF::Util {
-  # MD5 digests, url-encoded
+  use MIME::Base64 ();
   use Digest::MD5 ();
+
+  # MD5 digests, url-encoded
   sub md5_ubase64      ($str) { Digest::MD5::md5_base64($str) =~ tr|+/=|-_|dr }
   sub md5_ushort ($str, $len) { substr(md5_ubase64($str),0,$len)              }
 
@@ -14,6 +16,20 @@ package PXF::Util {
   sub is_module_loaded   ($name) { exists $INC{name_to_pm($name)}    }
   sub is_module_ok       ($name) { defined $INC{name_to_pm($name)}   }
   sub is_module_broken   ($name) { is_module_loaded($name) and !is_module_ok($name) }
+
+  # JSON and Base 64
+  sub json_codec () {
+    require JSON::MaybeXS;
+    state $json_codec = JSON::MaybeXS->new(utf8 => 1);
+    $json_codec;
+  }
+
+  sub encode_json ($dat) { json_codec->encode($dat) }
+  sub decode_json ($str) { json_codec->decode($str) }
+  sub encode_ju64 ($dat) { b64_to_u64(MIME::Base64::encode(encode_json($dat))) }
+  sub decode_ju64 ($str) { decode_json(MIME::Base64::decode(u64_to_b64($str))) }
+  sub b64_to_u64  ($str) { $str =~ tr`+/=\n`-_`dr }
+  sub u64_to_b64  ($str) { $str =~ tr`-_`+/`r     }
 }
 
 1;

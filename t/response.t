@@ -73,6 +73,47 @@ use Test::More;
     ok($body eq 'Line 1Line 2');
   }
 
+  # Flash
+  {
+    # We have to subclass to override flash_cookie_name()
+    eval q{
+      package PXF_Test_Response {
+        use parent 'PlackX::Framework::Response';
+        sub app_namespace     { die }
+        sub flash_cookie_name { 'flash-123456789-test' }
+      }
+      1;
+    } or die 'Could not create sublcass of PXFR: ' .$@;
+
+    my $response = PXF_Test_Response->new(200);
+    $response->flash("A plain string!");
+    is(
+      $response->finalize->[1][0] => 'Set-Cookie',
+      'Flash cookie is set'
+    );
+
+    my ($cookie_value) = split /; /, $response->finalize->[1][1];
+    is(
+      $cookie_value => 'flash-123456789-test=A%20plain%20string%21',
+      'Flash cookie value is correct (plain string)'
+    );
+
+    # This should get converted to JSON-url-base64
+    my $hashref = { title => "Hello\r\n", message => 'World!!!?', array => [0..9] };
+    $response->flash($hashref);
+    ($cookie_value) = split /; /, $response->finalize->[1][1];
+    ok(
+      $cookie_value =~
+      m/^flash-123456789-test=flash-123456789-test-ju64-([a-zA-Z0-9_-]+)$/,
+      'Flash cookie hashref is converted to JSON ub64'
+    );
+
+    my $coded = $1;
+    is_deeply(
+      PXF::Util::decode_ju64($coded) => $hashref,
+      'JSON cookie decoded back to hashref correctly'
+    );
+  }
 
 }
 done_testing();

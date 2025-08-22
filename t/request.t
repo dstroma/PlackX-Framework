@@ -56,7 +56,37 @@ package MyExample::Request {
   require PlackX::Framework;
   ok(substr($request->flash_cookie_name, 0, 5) eq 'flash');
   ok(8 < length $request->flash_cookie_name < 64);
-  # TODO - more flash cookie tests?
+
+  {
+    # We have to subclass to override flash_cookie_name()
+    eval q{
+      package PXF_Test_Request {
+        use parent 'PlackX::Framework::Request';
+        sub app_namespace     { die }
+        sub flash_cookie_name { 'flash-123456789-test' }
+      }
+      1;
+    } or die 'Could not create sublcass of PXFR: ' .$@;
+
+    my $env = sample_env();
+    $env->{HTTP_COOKIE} = 'flash-123456789-test=A%20Plain%20String';
+    $request = PXF_Test_Request->new($env);
+    is(
+      $request->flash => 'A Plain String',
+      'Flash is correct'
+    );
+  }
+  {
+    my $env  = sample_env();
+    my $hash = { key => 'value', key2 => 'value2', arr => [1..9] };
+    my $val  = PXF::Util::encode_ju64($hash);
+    $env->{HTTP_COOKIE} = "flash-123456789-test=flash-123456789-test-ju64-$val";
+    $request = PXF_Test_Request->new($env);
+    is_deeply(
+      $request->flash => $hash,
+      'Flash is correct (JSON-encoded hashref)'
+    );
+  }
 }
 
 done_testing();

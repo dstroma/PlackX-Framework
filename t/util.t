@@ -62,8 +62,44 @@ sub do_tests {
     }
   }
 
+  # JSON and Base64
+  {
+    use utf8;
+    my $bin_str = join('', map { chr($_) } 0..255);
+    my $encoded = 'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0-P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn-AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq-wsbKztLW2t7i5uru8vb6_wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t_g4eLj5OXm5-jp6uvs7e7v8PHy8_T19vf4-fr7_P3-_w';
+    is(
+      PXF::Util::b64_to_u64(MIME::Base64::encode($bin_str)) => $encoded,
+      'Base64 to Url-safe encoded correctly',
+    );
+    is(
+      MIME::Base64::decode(PXF::Util::u64_to_b64($encoded)) => $bin_str,
+       'Url-safe base64 decoded correctly'
+    );
+
+    my $json_data = {
+      test_array1 => [1,2,3],
+      test_arrayB => ['a'..'z'],
+      test_hash   => { key1 => 'value1', key2 => 'value2' },
+      test_utf8   => '⌨️😀🔍🌀🏁',
+      ext_chars   => $bin_str,
+    };
+    is_deeply(
+      PXF::Util::decode_ju64(PXF::Util::encode_ju64($json_data)) => $json_data,
+      'JSON encode and decode'
+    );
+
+    # No illegal characters
+    ok(
+      (PXF::Util::encode_ju64($json_data) =~ m/^[a-zA-Z0-9_\-]+$/),
+      'URL encoded contains proper characters'
+    );
+  }
+    
+
   # Modules
   {
+    # Use Plack::Util as a test for name to pm converstion and is-loaded test
+    # We know it will be installed as Plack is required for this distribution
     require Plack::Util;
     ok(
       PXF::Util::is_module_loaded('Plack::Util'),
