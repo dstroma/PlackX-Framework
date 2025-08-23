@@ -366,8 +366,6 @@ sub do_tests {
   }
 
   # Use class method syntax
-  # Manually unfreeze for testing purposes (don't do this in a real app)
-  delete My::Test::App::Router->engine->{pxf_frozen};
   ok(
     eval {
       package My::Test::App::Controller {

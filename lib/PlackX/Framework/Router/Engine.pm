@@ -13,8 +13,6 @@ package PlackX::Framework::Router::Engine {
     die 'Usage: $engine->match($plackx_framework_request)'
       unless $request and ref $request and $request->can('destination');
 
-    $self->freeze unless $self->{pxf_frozen};
-
     # Prefix with [ method ] to include in match
     my $destination = sprintf('/[ %s ]%s', $request->method, $request->destination);
     my @match_array = $self->SUPER::match($destination)
@@ -25,7 +23,7 @@ package PlackX::Framework::Router::Engine {
     my %match    = $match_array[0]->%*;
     my %captures = $match_array[1]->%*;
 
-    delete $captures{PXF_REQUEST_METHOD}; # it was for internal use only
+    delete $captures{PXF_REQUEST_METHOD}; # not needed anymore
     $match{route_parameters} = \%captures;
 
     # Add global filters (the match already has local filters in it)
@@ -60,8 +58,8 @@ package PlackX::Framework::Router::Engine {
     return \@matches;
   }
 
-  # Allow freezing of router engine so we can generate the regex in parent process
-  # in parent-child environments.
+  # Allow freezing of router engine so we can generate the regex in the parent
+  # in forked server types.
   sub freeze ($self) {
     $self->{pxf_frozen} = 1;
     $self->regexp;
@@ -69,7 +67,7 @@ package PlackX::Framework::Router::Engine {
     die 'Router has no routes'
       unless ref $self->{leaves} eq 'ARRAY' and $self->{leaves}->@* > 0;
 
-    return; # expecting void context
+    return;
   }
 
   # Override add to check for frozen-ness
