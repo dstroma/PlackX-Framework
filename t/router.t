@@ -50,7 +50,7 @@ sub do_tests {
         our $x = 0;
 
         # Route before base
-        route '/no-base' => sub { };
+        route '/no-base' => sub { return Plack::Response->new; };
 
         # Set a base for remainign routes
         base '/my-test-app';
@@ -81,6 +81,10 @@ sub do_tests {
         # Route arrayref test
         route ['/test1-aaa', '/test1-bbb'] => sub { $x = 8; };
 
+        # Check for bug, the above routes shouldn't get the below filters
+        filter before => sub { };
+        filter after  => sub { };
+        route '/last-route' => sub { };
       }
       1;
     },
@@ -94,6 +98,7 @@ sub do_tests {
     My::Test::App::Router->engine->match(@_)
   }
   my sub execute_filter ($filter) {
+    return if !defined $filter;
     return $filter->() if ref $filter eq 'CODE';
     return $filter->{action}->() if ref $filter eq 'HASH';
     die "Invalid filter";

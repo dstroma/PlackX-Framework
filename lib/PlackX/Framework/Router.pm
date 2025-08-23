@@ -87,11 +87,16 @@ package PlackX::Framework::Router {
       $spec = { $verb => $path };
     }
 
+    # Note: When adding filters, we have to use a copy
+    # Otherwise, a filter that is add later will be added to earlier routes
+    my $prefilters  = $local_filters->{$package}{'before'}; #->@*;
+    my $postfilters = $local_filters->{$package}{'after'}; #->@*;
+
     $engines->{$package}->add_route(
       spec        => $spec,
       base        => $bases->{$package},
-      prefilters  => $local_filters->{$package}{'before'},
-      postfilters => $local_filters->{$package}{'after'},
+      prefilters  => $prefilters  ? [@$prefilters ] : undef,
+      postfilters => $postfilters ? [@$postfilters] : undef,
       action      => coerce_action_to_subref($action, $package),
     );
   }
