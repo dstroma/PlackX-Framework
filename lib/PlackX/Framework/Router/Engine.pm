@@ -1,7 +1,6 @@
 use v5.36;
 package PlackX::Framework::Router::Engine {
   use parent 'Router::Boom';
-
   use Role::Tiny::With;
   with 'PlackX::Framework::Role::RouterEngine';
 
@@ -13,6 +12,8 @@ package PlackX::Framework::Router::Engine {
   sub match ($self, $request) {
     die 'Usage: $engine->match($plackx_framework_request)'
       unless $request and ref $request and $request->can('destination');
+
+    $self->freeze unless $self->{pxf_frozen};
 
     # Prefix with [ method ] to include in match
     my $destination = sprintf('/[ %s ]%s', $request->method, $request->destination);
@@ -57,6 +58,24 @@ package PlackX::Framework::Router::Engine {
         or (!ref $pattern and substr($request->destination, 0, length $pattern) eq $pattern);
     }
     return \@matches;
+  }
+
+  # Allow freezing of router engine so we can generate the regex in parent process
+  # in parent-child environments.
+  sub freeze ($self) {
+    $self->{pxf_frozen} = 1;
+    $self->regexp;
+
+    die 'Router has no routes'
+      unless ref $self->{leaves} eq 'ARRAY' and $self->{leaves}->@* > 0;
+
+    return; # expecting void context
+  }
+
+  # Override add to check for frozen-ness
+  sub add ($self, @params) {
+    die ref($self) . ': router is frozen' if $self->{pxf_frozen};
+    return $self->SUPER::add(@params);
   }
 
   # Meta object methods - add route or global filter ##################

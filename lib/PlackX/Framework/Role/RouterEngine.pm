@@ -1,7 +1,7 @@
 use v5.36;
 package PlackX::Framework::Role::RouterEngine {
   use Role::Tiny;
-  requires qw(new instance match add_route add_global_filter);
+  requires qw(new instance match add_route add_global_filter freeze);
 }
 
 1;
@@ -77,6 +77,8 @@ after local postfilters.
 Add a route. Accepted parameters should be a list of key-value pairs with the
 following keys:
 
+=over 4
+
 =item spec
 
 A route specification, which can be a string path, arrayref of paths, or a
@@ -100,10 +102,14 @@ An arrayref of local (package-scoped) prefilters.
 
 An arrayref of local (package-scoped) postfilters.
 
+=back
+
 =item $obj->add_global_filter(...)
 
 Add a global filter. Parameters should be a list of key-value pairs with the following
 keys:
+
+=over 4
 
 =item when
 
@@ -131,6 +137,12 @@ the request path_info =~ the regex.
 
 =back
 
+=item $obj->freeze
+
+A method telling the router engine to compile itself and prevent more routes
+from being added. This is required but may be implemented as a no-op.
+
+=back
 
 =head1 META
 

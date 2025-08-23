@@ -15,6 +15,10 @@ package PlackX::Framework::Handler {
   # App assembly section
   #
   sub build_app ($class, %options)  {
+    # Freeze the router
+    my $rt_engine = ($class->app_namespace . '::Router::Engine')->instance;
+    $rt_engine->freeze;
+
     # Honestly, it is probably better for the user to use Plack::Builder
     # or URLMap or Cascade instead of doing this, but we do it here for
     # convenience in development environments, at least for now. Think about
@@ -23,7 +27,7 @@ package PlackX::Framework::Handler {
     my $static_docroot     = delete $options{'static_docroot'};
     die "Unknown options: " . join(', ', keys %options) if %options;
 
-    my $main_app = sub ($env) { psgi_response($class->handle_request($env)) };
+    my $main_app = sub ($env) { psgi_response($class->handle_request($env, undef, $rt_engine)) };
     my $file_app = ($serve_static_files and do {
       require Plack::App::File;
       Plack::App::File->new(root => $static_docroot)->to_app;
@@ -65,7 +69,7 @@ package PlackX::Framework::Handler {
   #
   # Request handling section
   #
-  sub handle_request ($class, $env_or_req, $maybe_resp = undef) {
+  sub handle_request ($class, $env_or_req, $maybe_resp = undef, $maybe_rt_engine = undef) {
     my $app_namespace  = $class->app_namespace;
 
     # Get or create default request and response objects
@@ -98,11 +102,11 @@ package PlackX::Framework::Handler {
 
     # Clear flash if set, set response defaults, and route request
     $response->flash(undef) if $request->flash;
-    return $class->route_request($request, $response);
+    return $class->route_request($request, $response, $maybe_rt_engine);
   }
 
-  sub route_request ($class, $request, $response) {
-    my $rt_engine = ($class->app_namespace . '::Router::Engine')->instance;
+  sub route_request ($class, $request, $response, $rt_engine = undef) {
+    $rt_engine //= ($class->app_namespace . '::Router::Engine')->instance;
     if (my $match = $rt_engine->match($request)) {
       $request->route_base($match->{base}) if defined $match->{base};
       $request->route_parameters($match->{route_parameters});
