@@ -9,7 +9,7 @@ package PlackX::Framework::Response {
   sub stop                              { $_[0] || 1 }
   sub add_cleanup_callback($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
   sub flash_cookie_name         ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace)  }
-  sub render_json         ($self, $dat) { $self->render_content('application/json', PXF::Util::encode_ju64($dat)) }
+  sub render_json         ($self, $dat) { $self->render_content('application/json', PXF::Util::encode_json($dat)) }
   sub render_text         ($self, $str) { $self->render_content('text/plain'      , $str            ) }
   sub render_html         ($self, $str) { $self->render_content('text/html'       , $str            ) }
   sub render_stream       ($self, $sub) { $self->stream($sub); $self                                  }
