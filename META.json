@@ -1,7 +1,7 @@
 {
    "abstract" : "A thin framework for PSGI/Plack web apps.",
    "author" : [
-      "Dondi Michael Stroma, <dstroma@gmail.com<gt>"
+      "Dondi Michael Stroma, <dstroma@gmail.com>"
    ],
    "dynamic_config" : 0,
    "generated_by" : "Minilla/v3.1.26, CPAN::Meta::Converter version 2.150010",
@@ -77,9 +77,6 @@
       }
    },
    "version" : "0.26",
-   "x_contributors" : [
-      "Dondi Michael Stroma <dstroma@gmail.com>"
-   ],
    "x_serialization_backend" : "JSON::PP version 4.16",
    "x_static_install" : 1
 }

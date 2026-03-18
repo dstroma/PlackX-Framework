@@ -55,7 +55,8 @@ for any required modules that do not exist. The following example
     }
 
 will attempt to load MyProject::Handler, MyProject::Request,
-MyProject::Response and so on, or create them if they do not exist.
+MyProject::Response and so on, or create them (in memory, not on disk) if
+they do not exist.
 
 You only use, not inherit from, PlackX::Framework. However, your
 ::Handler, ::Request, ::Response, etc. classes should inherit from
@@ -63,20 +64,20 @@ PlackX::Framework::Handler, ::Request, ::Response, and so on.
 
 ## Optional Components
 
-The Config and Template modules are included in the distribution, but
+The Config, Template, URIx modules are included in the distribution, but
 loading them is optional to save memory and compile time when not needed.
 Just as with the required modules, you can subclass them yourself, or you can
 have them automatically generated.
 
-To set up all optional modules, use the :all (or +all) tag in your use line.
+To set up all optional modules, import with the :all (or +all) tag.
 
     # The following are equivalent
     use PlackX::Framework qw(:all);
     use PlackX::Framework qw(+all);
 
 Note that 'use Module -option' syntax is not supported, because it can be mis-
-read by human readers as "minus option" which might make them think the intent
-is to turn the specified option off.
+read by human readers as "minus option" which might give the impression that
+the named option is being turned off.
 
 If you want to pick certain optional modules, you can specify those
 individually with the name of the module, optionally preceded by a single
@@ -89,15 +90,15 @@ double colon (: or ::) or a plus sign. You may also use lower case.
     use PlackX::Framework qw(::Config ::Template);
     use PlackX::Framework qw(+Config +Template);
 
-Third party developers can install additional optional components, by pushing
-to the @PlackX::Framework::plugins array. These can then be loaded by PXF the
-same way as the optional modules described above.
+Third party developers can make additional optional components available, by
+pushing to the @PlackX::Framework::plugins array. These can then be loaded by
+an application same way as the bundled optional modules.
 
 ## The Pieces and How They Work Together
 
 ### PlackX::Framework
 
-PlackX::Framework is basically a management module, that is responsible for
+PlackX::Framework is basically a management module that is responsible for
 loading required and optional components. It will automatically subclass
 required, and desired optional classes for you if you have not done so already.
 It exports one symbol, app(), to the calling package; it also exports an
@@ -216,17 +217,17 @@ with the Plack::Request->uri() method). If you have not enabled the URIx
 feature in your application, with the :URIx or :all tag, the request->urix
 method will cause an error.
 
-# Why Another Framework?
+## Why Another Framework?
 
 Plack comes with several modules that make it possible to create a bare-bones
-web app, but as described in the documentation for Plack::Request, this is a
-very low-level way to do this. A framework is recommended. This package
+web app, but as described in the documentation for Plack::Request, that is a
+very low-level way to do it. A framework is recommended. This package
 provides a minimalistic framework which takes Plack::Request, Plack::Response,
 and several other modules and ties them together.
 
-The end result is a simple, lightweight framework that is higher level
-than using the raw Plack building blocks, although it does not have as many
-features as other frameworks. Here are some advantages:
+The end result is a simple framework that is higher level than using the raw
+Plack building blocks, although it does not have as many features as other
+frameworks. Here are some advantages:
 
 - Load Time
 
@@ -256,6 +257,11 @@ The author makes no claims that this framework is better than any other
 framework except for the few trivial metrics described above. It has been
 published in the spirit of TIMTOWDI.
 
+## Why Now?
+
+The project was started in 2016, and is used in production by its author.
+It seemed well past time to publish it to CPAN (better late than never?).
+
 ## Object Orientation and Magic
 
 PlackX::Framework has an object-oriented design philosophy that uses both
@@ -263,11 +269,11 @@ inheritance and composition to implement its features. Symbols exported are
 limited to avoid polluting your namespace, however, a lot of the "magic" is
 implemented with the import() method, so be careful about using empty
 parenthesis in your use statements, as this will prevent the import() method
-from being called and may break some magic.
+from being called and may break things.
 
 Also be careful about whether you should use a module or subclass it.
 Generally, modifying the behavior of the framework itself will involve
-subclassing, while using the framework will not.
+manual subclassing, while using the framework as-is will not.
 
 ## Configuration
 
@@ -309,7 +315,7 @@ the following:
 
 ## Routes, Requests, and Request Filtering
 
-See PlackX::Framework::Router for documentation on request routing and
+See PlackX::Framework::Router for detailed documentation on request routing and
 filtering.
 
 ## Templating
@@ -349,7 +355,7 @@ plain DBI/SQL.
 
 # EXPORT
 
-This module will export the method app, which returns the code reference of
+This module will export the "app" method, which returns the code reference of
 your app in accordance to the PSGI specification. (This is actually a shortcut
 to \[ProjectName\]::Handler->build\_app.)
 
@@ -377,8 +383,8 @@ to \[ProjectName\]::Handler->build\_app.)
 
 # AUTHOR
 
-Dondi Michael Stroma, &lt;dstroma@gmail.com&lt;gt>
+Dondi Michael Stroma, <dstroma@gmail.com>
 
 # COPYRIGHT AND LICENSE
 
-Copyright (C) 2016-2025 by Dondi Michael Stroma
+Copyright (C) 2016-2026 by Dondi Michael Stroma
