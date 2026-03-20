@@ -46,10 +46,12 @@
             "JSON::MaybeXS" : "0",
             "Sub::Util" : "1.40",
             "Template" : "0",
+            "URI" : "0",
             "URI::Fast" : "0"
          },
          "requires" : {
             "Digest::MD5" : "0",
+            "HTTP::Status" : "0",
             "List::Util" : "0",
             "Plack" : "0",
             "Role::Tiny" : "0",
