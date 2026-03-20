@@ -1,7 +1,11 @@
+# Basic requirements
 requires 'perl' => '5.036000';
 requires 'Plack';
 requires 'Role::Tiny';
 requires 'Router::Boom';
+
+# Should be included by way of Plack
+requires 'HTTP::Status';
 
 # In core but list anyway
 requires 'Digest::MD5';
@@ -13,6 +17,7 @@ recommends 'Sub::Util' => '1.40';
 recommends 'Config::Any';
 recommends 'JSON::MaybeXS';
 recommends 'Template';
+recommends 'URI';
 recommends 'URI::Fast';
 
 # For Testing
