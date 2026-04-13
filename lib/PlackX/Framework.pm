@@ -147,7 +147,7 @@ PlackX::Framework::Handler, ::Request, ::Response, and so on.
 =head2 Optional Components
 
 The Config, Template, URIx modules are included in the distribution, but
-loading them is optional to save memory and compile time when not needed.
+loading them is optional to save memory and compilation time when not needed.
 Just as with the required modules, you can subclass them yourself, or you can
 have them automatically generated.
 
@@ -157,9 +157,9 @@ To set up all optional modules, import with the :all (or +all) tag.
     use PlackX::Framework qw(:all);
     use PlackX::Framework qw(+all);
 
-Note that 'use Module -option' syntax is not supported, because it can be mis-
-read by human readers as "minus option" which might give the impression that
-the named option is being turned off.
+Note that 'use Module -option' syntax is not supported, because it can be
+misread by humans as "minus option" which might give the false impression that
+the option is being turned off.
 
 If you want to pick certain optional modules, you can specify those
 individually with the name of the module, optionally preceded by a single
@@ -445,8 +445,8 @@ add them like this
 
 If you want to use your own templating system, you can create a MyApp::Template
 module that subclasses PlackX::Framework::Template, then override necessary
-methods; however, a simpler way is available if your templating system as a TT
-compatible process method, like this:
+methods; however, a simpler way is available if your templating system has a TT
+compatible process() method, like this:
 
     use MyApp::Template qw(:manual);
     MyApp::Template->set_engine(My::Template::System->new(%options));
@@ -454,7 +454,7 @@ compatible process method, like this:
 
 =head2 Model Layer
 
-This framework is databse/ORM agnostic, you are free to choose your own or use
+This framework is database/ORM agnostic, you are free to choose your own or use
 plain DBI/SQL.
 
 
@@ -477,8 +477,6 @@ to [ProjectName]::Handler->build_app.)
 
 =item Router::Boom
 
-=item URI::Fast
-
 =back
 
 
@@ -488,7 +486,14 @@ to [ProjectName]::Handler->build_app.)
 
 =item Config::Any
 
+=item Sub::Util
+
+Due to extensive use of code references, installation of Sub::Util is
+recommended to help debugging your application.
+
 =item Template
+
+=item URI::Fast
 
 =back
 
