@@ -523,5 +523,7 @@ Dondi Michael Stroma, E<lt>dstroma@gmail.comE<gt>
 
 Copyright (C) 2016-2026 by Dondi Michael Stroma
 
+This library is free software; you can redistribute it
+and/or modify it under the same terms as Perl itself.
 
 =cut
