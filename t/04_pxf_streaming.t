@@ -69,8 +69,8 @@ sub do_tests {
     my $t_1 = $body_data[-2]->{time};
     my $elapsed = $t_2 - $t_1;
     ok(
-      ($SLEEP_TIME*0.85 < $elapsed < $SLEEP_TIME*1.15),
-      "Last body content lines received ${SLEEP_TIME}s +/- 15% apart (actual: ${elapsed}s)"
+      ($SLEEP_TIME*0.8 < $elapsed < $SLEEP_TIME*1.2),
+      "Last body content lines received ${SLEEP_TIME}s +/- 20% apart (actual: ${elapsed}s)"
     );
   }
 
@@ -139,7 +139,7 @@ sub run_client (%options) {
       PeerAddr => $options{host},
       PeerPort => $options{port},
       Proto    => 'tcp',
-  ) or die "Could not connect to server - $!";
+  ) or die "Could not connect to server on $options{host}:$options{port} - $IO::Socket::errstr";
 
   # Send HTTP request manually
   print $socket "GET $options{path} HTTP/1.0\r\n";

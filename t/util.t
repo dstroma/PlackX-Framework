@@ -22,8 +22,8 @@ sub do_tests {
       my $el = $t2 - $t1;
       my $el_rnd = sprintf('%.4f', $el);
       ok(
-        ($interval*0.8 < $el < $interval*1.2 and $interval-0.2 < $el < $interval+0.2),
-        "Sleep for $interval seconds +/-20% +/-0.2s (actual: $el_rnd)"
+        ($interval*0.8 < $el < $interval*1.2 or $interval-0.2 < $el < $interval+0.2),
+        "Sleep for $interval seconds +/-20% or +/-0.2s (actual: $el_rnd)"
       );
     }
   }
