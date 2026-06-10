@@ -1,20 +1,20 @@
 use v5.36;
 package PlackX::Framework::Response {
   use parent 'Plack::Response';
-  use PXF::Util ();
+  use PlackX::Framework::Util qw(encode_json encode_ju64);
 
   use Plack::Util::Accessor qw(stash cleanup_callbacks template stream stream_writer);
   sub GlobalResponse ($class)           { ($class->app_namespace.'::Handler')->global_response }
   sub next                              { return;    }
   sub stop                              { $_[0] || 1 }
   sub add_cleanup_callback($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
-  sub flash_cookie_name         ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace)  }
-  sub render_json         ($self, $dat) { $self->render_content('application/json', PXF::Util::encode_json($dat)) }
-  sub render_text         ($self, $str) { $self->render_content('text/plain'      , $str            ) }
-  sub render_html         ($self, $str) { $self->render_content('text/html'       , $str            ) }
-  sub render_stream       ($self, $sub) { $self->stream($sub); $self                                  }
-  sub render_template     ($self, @ops) { $self->{template}->render(@ops); $self                      }
-  sub finalize                  ($self) { $self->stream ? $self->finalize_sb : $self->SUPER::finalize }
+  sub flash_cookie_name         ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace)   }
+  sub render_json         ($self, $dat) { $self->render_content('application/json', encode_json($dat)) }
+  sub render_text         ($self, $str) { $self->render_content('text/plain'      , $str             ) }
+  sub render_html         ($self, $str) { $self->render_content('text/html'       , $str             ) }
+  sub render_stream       ($self, $sub) { $self->stream($sub); $self                                   }
+  sub render_template     ($self, @ops) { $self->{template}->render(@ops); $self                       }
+  sub finalize                  ($self) { $self->stream ? $self->finalize_sb : $self->SUPER::finalize  }
 
   sub new ($class, @args) {
     my $self = $class->SUPER::new(@args);
@@ -92,7 +92,7 @@ package PlackX::Framework::Response {
     my $cname   = $self->flash_cookie_name;
     $value //= '';
 
-    $value = "$cname-ju64-" . PXF::Util::encode_ju64($value) if ref $value;
+    $value = "$cname-ju64-" . encode_ju64($value) if ref $value;
     $self->cookies->{$cname} = { value=>$value, path=>'/', 'max-age'=>$max_age, samesite=>'strict' };
     return $self;
   }

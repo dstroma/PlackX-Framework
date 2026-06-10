@@ -1,8 +1,7 @@
 #!perl
 use v5.36;
 use Test::More;
-
-use PXF::Util ();
+use PlackX::Framework::Util qw(minisleep);
 our $SLEEP_TIME = 0.25;
 
 do_tests();
@@ -35,7 +34,7 @@ sub do_tests {
 
           # Stream remaining content
           return $response->render_stream(sub {
-            do { $response->print($_); PXF::Util::minisleep $SLEEP_TIME } for @content;
+            do { $response->print($_); minisleep($SLEEP_TIME) } for @content;
           });
         };
       }
@@ -54,7 +53,7 @@ sub do_tests {
     my $port = 40_000 + int(rand() * 20_000);
     my $server = run_server(port => $port, app => My::Test::App->app);
 
-    PXF::Util::minisleep $SLEEP_TIME;
+    minisleep($SLEEP_TIME);
     my $data = run_client(path => '/streaming-test', %$server);
     stop_server($server);
 
@@ -85,7 +84,7 @@ sub do_tests {
     my $port = 40_000 + int(rand() * 20_000);
     my $server = run_server(port => $port, app => $app_no_streaming);
 
-    PXF::Util::minisleep $SLEEP_TIME;
+    minisleep($SLEEP_TIME);
     my $data = run_client(path => '/streaming-test', %$server);
     stop_server($server);
 

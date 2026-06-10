@@ -1,6 +1,6 @@
 use v5.36;
 package PlackX::Framework::Handler {
-  use PXF::Util ();
+  use PlackX::Framework::Util qw(is_module_loaded);
   use Scalar::Util qw(blessed);
   use HTTP::Status qw(status_message);
 
@@ -89,7 +89,7 @@ package PlackX::Framework::Handler {
     $response->stash($stash);
 
     # Maybe set up Templating, if loaded
-    if (PXF::Util::is_module_loaded($app_namespace . '::Template')) {
+    if (is_module_loaded($app_namespace . '::Template')) {
       eval {
         my $template = ($app_namespace . '::Template')->new($response);
         $template->set(STASH => $stash, REQUEST => $request, RESPONSE => $response);

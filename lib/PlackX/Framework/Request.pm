@@ -1,6 +1,7 @@
 use v5.36;
 package PlackX::Framework::Request {
   use parent 'Plack::Request';
+  use PlackX::Framework::Util ();
   use Carp qw(croak);
 
   use Plack::Util::Accessor qw(stash route_base route_parameters);
@@ -51,7 +52,7 @@ package PlackX::Framework::Request {
     my $cname   = $self->flash_cookie_name;
     my $content = $self->cookies->{$cname};
     my $prefix  = "$cname-ju64-";
-    return PXF::Util::decode_ju64(substr($content, length($prefix)))
+    return PlackX::Framework::Util::decode_ju64(substr($content, length($prefix)))
       if $content and substr($content, 0, length($prefix)) eq $prefix;
     return $content;
   }

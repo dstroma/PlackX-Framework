@@ -1,6 +1,7 @@
 #!perl
 use v5.36;
 use Test::More;
+use PlackX::Framework::Util ();
 
 {
   # Require
@@ -110,7 +111,7 @@ use Test::More;
 
     my $coded = $1;
     is_deeply(
-      PXF::Util::decode_ju64($coded) => $hashref,
+      PlackX::Framework::Util::decode_ju64($coded) => $hashref,
       'JSON cookie decoded back to hashref correctly'
     );
   }

@@ -1,6 +1,7 @@
 #!perl
 use v5.36;
 use Test::More;
+use PlackX::Framework::Util qw(encode_ju64);
 
 package MyExample::Request {
   use parent 'PlackX::Framework::Request';
@@ -79,7 +80,7 @@ package MyExample::Request {
   {
     my $env  = sample_env();
     my $hash = { key => 'value', key2 => 'value2', arr => [1..9] };
-    my $val  = PXF::Util::encode_ju64($hash);
+    my $val  = encode_ju64($hash);
     $env->{HTTP_COOKIE} = "flash-123456789-test=flash-123456789-test-ju64-$val";
     $request = PXF_Test_Request->new($env);
     is_deeply(

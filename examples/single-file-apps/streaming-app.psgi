@@ -1,9 +1,8 @@
 #!perl
 use v5.36;
-use PXF::Util ();
-
 package StreamingApp {
   use PlackX::Framework;
+  use PlackX::Framework::Util qw(minisleep);
   use StreamingApp::Router;
   route '/stream-example' => sub ($request, $response) {
     # This part is not streaming
@@ -23,7 +22,7 @@ package StreamingApp {
         $response->print("Hello $i<br>\n");
         # Simulate a slow response with sleep
         # sleep 1;
-        PXF::Util::minisleep($i/10);
+        minisleep($i/10);
       }
       $response->print("</body></html>\n");
     });
