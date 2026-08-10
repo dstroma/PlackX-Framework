@@ -154,6 +154,8 @@ subroutine.
 
 =head1 OBJECT METHODS
 
+Note: All render and redirect methods return $self (the response object).
+
 =over 4
 
 =item charset(), charset($newval)

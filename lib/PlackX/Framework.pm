@@ -1,7 +1,7 @@
 # strict (5.12), warnings (5.35), signatures (5.36)
 use v5.36;
 
-package PlackX::Framework 0.28 {
+package PlackX::Framework 0.29 {
   use PXF::Util ();
   use List::Util qw(any);
 
@@ -213,7 +213,10 @@ a stash, and if set up, templating.
 
 The PlackX::Framework::Request and PlackX::Framework::Response modules are
 subclasses of Plack::Request and Plack::Response sprinkled with additional
-features, described below.
+features. Both share stash and flash properties.
+
+For more information, see the documentation for L<PlackX::Framework::Request>
+and L<PlackX::Framework::Response>.
 
 =over 4
 
@@ -279,6 +282,8 @@ your main app package, as shown in the introduction, or separate packages.
       };
     }
 
+For more information, see L<Plack::Framework::Router>.
+
 
 =head3 PlackX::Framework::Router::Engine
 
@@ -292,6 +297,8 @@ directly. It is used by PlackX::Framework::Router internally.
 This module is provided primarily for convenience. Currently not used by PXF
 directly except you may optionally store template system configuration there.
 
+For more information, see L<Plack::Framework::Config>.
+
 
 =head3 PlackX::Framework::Template
 
@@ -300,6 +307,14 @@ Template Toolkit, offering several convenience methods. If you desire to use
 a different templating system from TT, you may override as many methods as
 necessary in your subclass. A new instance of this class is generated for
 each request by the app() method of PlackX::Framework::Handler.
+
+During request handling, PlackX::Framework will check if templating has been
+set up by checking if a ::Template module in your application's namespace has
+been loaded. If so, it will automatically create an instance of the respective
+::Template class and automatically add the template variables STASH, REQUEST,
+and RESPONSE to the object.
+
+For more information, see L<Plack::Framework::Template>.
 
 
 =head3 PlackX::Framework::URIx
@@ -311,6 +326,7 @@ with the Plack::Request->uri() method). If you have not enabled the URIx
 feature in your application, with the :URIx or :all tag, the request->urix
 method will cause an error.
 
+For more information, see L<PlackX::Framework::URIx>.
 
 =head2 Why Another Framework?
 
@@ -439,9 +455,9 @@ Therefore, the following will not load Template Toolkit:
     require MyApp::Template; # Template Toolkit is not loaded
 
 If you want to supply Template Toolkit with configuration options, you can
-add them like this
+add them by specifying a parameter hashref:
 
-    use MyApp::Template (INCLUDE_PATH => 'template');
+    use MyApp::Template { INCLUDE_PATH => 'template', ... };
 
 If you want to use your own templating system, you can create a MyApp::Template
 module that subclasses PlackX::Framework::Template, then override necessary
