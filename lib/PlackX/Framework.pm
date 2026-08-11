@@ -1,7 +1,7 @@
 # strict (5.12), warnings (5.35), signatures (5.36)
 use v5.36;
 
-package PlackX::Framework 0.29 {
+package PlackX::Framework 0.30 {
   use PXF::Util ();
   use List::Util qw(any);
 

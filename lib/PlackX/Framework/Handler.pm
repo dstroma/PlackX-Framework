@@ -50,7 +50,7 @@ package PlackX::Framework::Handler {
     # error codes at the last possible moment and render a user-defined page.
     return sub ($env) {
       my $main_resp = $main_app->($env);
-      return $main_resp if ref $main_resp and $main_resp->[0] != 404;
+      return $main_resp if ref $main_resp and (ref $main_resp eq 'CODE' or $main_resp->[0] != 404);
       my $file_resp = $file_app->($env);
       return $file_resp if ref $file_resp and $file_resp->[0] != 404;
       return $main_resp;

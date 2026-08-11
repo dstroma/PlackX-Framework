@@ -2,6 +2,8 @@ Revision history for Perl extension PlackX-Framework
 
 {{$NEXT}}
 
+    - Fix bug when a streaming response was used with static file server
+
 0.29 2026-08-10T20:42:09Z
 
     - Documentation fixes and additions
