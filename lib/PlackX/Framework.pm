@@ -328,6 +328,21 @@ method will cause an error.
 
 For more information, see L<PlackX::Framework::URIx>.
 
+
+=head2 Middleware
+
+You can trigger PlackX::Framework to build middleware into your app by defining
+an apply_middleware sub in your root application. The sub will be passed a PSGI
+code reference and should return a PSGI code reference.
+
+    package MyApp {
+      use PlackX::Framework;
+      sub apply_middleware ($app) {
+        $app = Plack::Middleware::Alice(%options);
+        $app = Plack::Middleware::Bob(%options);
+      }
+    }
+
 =head2 Why Another Framework?
 
 Plack comes with several modules that make it possible to create a bare-bones

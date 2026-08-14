@@ -14,7 +14,15 @@ package PlackX::Framework::Handler {
   #
   # App assembly section
   #
-  sub build_app ($class, %options)  {
+  sub build_app ($class, %options) {
+    my $app = _build_app($class, %options);
+    if (my $wrapper = $class->app_namespace->can('apply_middleware')) {
+      $app = $wrapper->($app);
+    }
+    return $app;
+  }
+
+  sub _build_app ($class, %options)  {
     # Freeze the router
     my $rt_engine = ($class->app_namespace . '::Router::Engine')->instance;
     $rt_engine->freeze;

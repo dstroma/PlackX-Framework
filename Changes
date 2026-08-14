@@ -3,6 +3,8 @@ Revision history for Perl extension PlackX-Framework
 {{$NEXT}}
 
     - Fix bug when a streaming response was used with static file server
+    - Make it easier to use PlackX::Framework with Plack::Middleware
+      TODO BEFORE RELEASE - ADD TESTS FOR THIS
 
 0.29 2026-08-10T20:42:09Z
 
