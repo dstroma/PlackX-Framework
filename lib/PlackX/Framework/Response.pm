@@ -162,13 +162,15 @@ Note: All render and redirect methods return $self (the response object).
 
 Add a cleanup callback. If the PSGI server supports the PSGI extension
 psgix.cleanup, PlackX::Framework will add it to the psgi.cleanup.handlers
-arrayref. If the server does not support cleanup handlers, PlackX::Framework
-will simulate them by executing them just before sending the response.
+arrayref (but see note below). If the server does not support cleanup
+handlers, PXF will simulate them by executing them just before sending the
+response.
 
-Note that callbacks added through this method are only associated with the given
-response object and are not processed by the framework until the response object
-is returned by your application to the framework, which occurs in
-PlackX::Framework::Handler.
+Note that callbacks are added to the response object to itself. They are not
+recognized by the framework until that response object is returned by the
+application. This means if you add callbacks to a response object, throw it
+away, and create a new response object, and return that one as your response
+instead, the original callbacks will be lost.
 
 =item charset(), charset($newval)
 
