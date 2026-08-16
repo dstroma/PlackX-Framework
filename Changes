@@ -3,6 +3,7 @@ Revision history for Perl extension PlackX-Framework
 {{$NEXT}}
 
     - Remove unnecessary static file app integration
+    - Document undocumented cleanup callback feature
 
 0.30 2026-08-14T09:30:27Z
 

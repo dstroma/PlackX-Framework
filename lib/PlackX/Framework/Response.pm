@@ -165,6 +165,11 @@ psgix.cleanup, PlackX::Framework will add it to the psgi.cleanup.handlers
 arrayref. If the server does not support cleanup handlers, PlackX::Framework
 will simulate them by executing them just before sending the response.
 
+Note that callbacks added through this method are only associated with the given
+response object and are not processed by the framework until the response object
+is returned by your application to the framework, which occurs in
+PlackX::Framework::Handler.
+
 =item charset(), charset($newval)
 
 Get or set the charset portion of the content-type header.
