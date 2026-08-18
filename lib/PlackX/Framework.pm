@@ -246,9 +246,10 @@ one.
 
 =head3 PlackX::Framework::Router
 
-This module exports the route, route_base, global_filter, and filter functions
+This module exports the route, base, global_filter, and filter functions
 to give you a minimalistic web app controller DSL. You can import this into
 your main app package, as shown in the introduction, or separate packages.
+If you manually subclass this module, you can also customize the keywords.
 
     # Set up the app
     package MyApp {
