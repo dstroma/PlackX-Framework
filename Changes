@@ -3,6 +3,7 @@ Revision history for Perl extension PlackX-Framework
 {{$NEXT}}
 
     - Downgrade minimum perl version to 5.26.0
+    - Documentation fixes and updates
 
 0.31 2026-08-16T08:09:23Z
 
