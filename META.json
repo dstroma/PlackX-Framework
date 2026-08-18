@@ -4,13 +4,13 @@
       "Dondi Michael Stroma, <dstroma@gmail.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.1.29, CPAN::Meta::Converter version 2.150013",
+   "generated_by" : "Minilla/v3.1.29, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "perl_5"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-      "version" : 2
+      "version" : "2"
    },
    "name" : "PlackX-Framework",
    "no_index" : {
@@ -57,7 +57,7 @@
             "Router::Boom" : "0",
             "Scalar::Util" : "0",
             "URI" : "0",
-            "perl" : "v5.36.0"
+            "perl" : "v5.26.0"
          }
       },
       "test" : {
@@ -79,6 +79,6 @@
       }
    },
    "version" : "0.31",
-   "x_serialization_backend" : "JSON::PP version 4.16",
+   "x_serialization_backend" : "JSON::PP version 2.27400_02",
    "x_static_install" : 1
 }

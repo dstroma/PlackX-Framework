@@ -1,6 +1,7 @@
 # strict (5.12), warnings (5.35), signatures (5.36)
-use v5.36;
-
+use v5.26;
+use warnings;
+use experimental 'signatures';
 package PlackX::Framework 0.31 {
   use PXF::Util ();
   use List::Util qw(any);
