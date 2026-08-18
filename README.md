@@ -121,16 +121,16 @@ You would not normally have to subclass this module manually unless you would
 like to customize its behavior. It will prepare request and response objects,
 a stash, and if set up, templating.
 
-### PlackX::Framework::Request
-
-### PlackX::Framework::Response
+### PlackX::Framework::Request and PlackX::Framework::Response
 
 The PlackX::Framework::Request and PlackX::Framework::Response modules are
 subclasses of Plack::Request and Plack::Response sprinkled with additional
-features. Both share stash and flash properties.
+features.
 
 For more information, see the documentation for [PlackX::Framework::Request](https://metacpan.org/pod/PlackX%3A%3AFramework%3A%3ARequest)
 and [PlackX::Framework::Response](https://metacpan.org/pod/PlackX%3A%3AFramework%3A%3AResponse).
+
+Both share common stash and flash properties, described below.
 
 - stash()
 
