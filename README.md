@@ -125,7 +125,9 @@ a stash, and if set up, templating.
 
 The PlackX::Framework::Request and PlackX::Framework::Response modules are
 subclasses of Plack::Request and Plack::Response sprinkled with additional
-features.
+features, including various convenience methods, request re-routing (not to be
+confused with HTTP redirects), cleanup handlers, and easier PSGI response
+streaming.
 
 For more information, see the documentation for [PlackX::Framework::Request](https://metacpan.org/pod/PlackX%3A%3AFramework%3A%3ARequest)
 and [PlackX::Framework::Response](https://metacpan.org/pod/PlackX%3A%3AFramework%3A%3AResponse).
