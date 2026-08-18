@@ -297,7 +297,7 @@ continues to the next matching filter or route.
 
 Note that unlike some other frameworks, routes CANNOT cascade, but filters can.
 
-For more information, see L<Plack::Framework::Router>.
+For more information, see L<PlackX::Framework::Router>.
 
 
 =head3 PlackX::Framework::Router::Engine
@@ -329,7 +329,7 @@ been loaded. If so, it will automatically create an instance of the respective
 ::Template class and automatically add the template variables STASH, REQUEST,
 and RESPONSE to the object.
 
-For more information, see L<Plack::Framework::Template>.
+For more information, see L<PlackX::Framework::Template>.
 
 
 =head3 PlackX::Framework::URIx

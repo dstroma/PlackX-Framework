@@ -207,7 +207,7 @@ continues to the next matching filter or route.
 
 Note that unlike some other frameworks, routes CANNOT cascade, but filters can.
 
-For more information, see [Plack::Framework::Router](https://metacpan.org/pod/Plack%3A%3AFramework%3A%3ARouter).
+For more information, see [PlackX::Framework::Router](https://metacpan.org/pod/PlackX%3A%3AFramework%3A%3ARouter).
 
 ### PlackX::Framework::Router::Engine
 
@@ -236,7 +236,7 @@ been loaded. If so, it will automatically create an instance of the respective
 ::Template class and automatically add the template variables STASH, REQUEST,
 and RESPONSE to the object.
 
-For more information, see [Plack::Framework::Template](https://metacpan.org/pod/Plack%3A%3AFramework%3A%3ATemplate).
+For more information, see [PlackX::Framework::Template](https://metacpan.org/pod/PlackX%3A%3AFramework%3A%3ATemplate).
 
 ### PlackX::Framework::URIx
 
