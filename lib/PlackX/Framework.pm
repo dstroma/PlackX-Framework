@@ -1,8 +1,7 @@
-# strict (5.12), warnings (5.35), signatures (5.36)
 use v5.26;
 use warnings;
 use experimental 'signatures';
-package PlackX::Framework 0.31 {
+package PlackX::Framework 0.32 {
   use PXF::Util ();
   use List::Util qw(any);
 
@@ -282,6 +281,18 @@ your main app package, as shown in the introduction, or separate packages.
         ...
       };
     }
+
+Every route action is called with two arguments: a request object and response
+object. The response object is provided for convenience as the application may
+return it or a different response object, (or even another request object as
+described in the re-routing feature of PlackX::Framework::Request).
+
+Filters are also called the same way, but they should only return a response
+object if they wish to stop request processing. If a filter returns a false
+value ($response->next is provided for semantic convenience), request processing
+continues to the next matching filter or route.
+
+Note that unlike some other frameworks, routes CANNOT cascade, but filters can.
 
 For more information, see L<Plack::Framework::Router>.
 
