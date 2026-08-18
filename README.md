@@ -192,6 +192,18 @@ your main app package, as shown in the introduction, or separate packages.
       };
     }
 
+Every route action is called with two arguments: a request object and response
+object. The response object is provided for convenience as the application may
+return it or a different response object, (or even another request object as
+described in the re-routing feature of PlackX::Framework::Request).
+
+Filters are also called the same way, but they should only return a response
+object if they wish to stop request processing. If a filter returns a false
+value ($response->next is provided for semantic convenience), request processing
+continues to the next matching filter or route.
+
+Note that unlike some other frameworks, routes CANNOT cascade, but filters can.
+
 For more information, see [Plack::Framework::Router](https://metacpan.org/pod/Plack%3A%3AFramework%3A%3ARouter).
 
 ### PlackX::Framework::Router::Engine
