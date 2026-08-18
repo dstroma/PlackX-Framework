@@ -121,7 +121,7 @@ You would not normally have to subclass this module manually unless you would
 like to customize its behavior. It will prepare request and response objects,
 a stash, and if set up, templating.
 
-### PlackX::Framework::Request and PlackX::Framework::Response
+### PlackX::Framework::Request and ::Response
 
 The PlackX::Framework::Request and PlackX::Framework::Response modules are
 subclasses of Plack::Request and Plack::Response sprinkled with additional
@@ -136,10 +136,10 @@ Both share common stash and flash properties, described below.
 
 - stash()
 
-    Both feature a shared "stash" which is a hashref in which you can store any
-    data you would like. The "stash" is not a user session but a way to
-    temporarily store information during a request/response cycle. It is
-    re-initialized for each cycle.
+    Request and Response objects share a "stash" which is a hashref in which you
+    can store any data you would like. This not a user session but a way to
+    temporarily store information during a single request/response cycle. It is
+    re-initialized to an empty hashref at the start of each cycle.
 
 - flash()
 
@@ -220,7 +220,7 @@ directly. It is used by PlackX::Framework::Router internally.
 This module is provided primarily for convenience. Currently not used by PXF
 directly except you may optionally store template system configuration there.
 
-For more information, see [Plack::Framework::Config](https://metacpan.org/pod/Plack%3A%3AFramework%3A%3AConfig).
+For more information, see [PlackX::Framework::Config](https://metacpan.org/pod/PlackX%3A%3AFramework%3A%3AConfig).
 
 ### PlackX::Framework::Template
 
