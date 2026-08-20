@@ -21,6 +21,13 @@ use Test::More;
     ok($response->last eq $response,  'last()');
     ok($response->stop eq $response,  'stop()');
     ok(not($response->next), 'next()');
+
+    # Defaults
+    $response->set_defaults;
+    ok(
+      ($response->charset eq 'utf8' and $response->content_type eq 'text/html' and $response->status == 200),
+      'set_defaults: Default charset is utf8, status 200, content-type text/html'
+    );
   }
 
   # Cleanup callbacks
@@ -95,7 +102,7 @@ use Test::More;
     $response->print('Line 1');
     $response->print('Line 2');
     my $body = join '', $response->body->@*;
-    ok($body eq 'Line 1Line 2');
+    is($body => 'Line 1Line 2', 'object method print() adds lines to body');
   }
 
   # Redirect/Finalize
@@ -109,6 +116,12 @@ use Test::More;
     is_deeply(
       $response->finalize => [303, ['Location','http://example.example/'],[]],
       'redirect() and finalize() sets location header and status code 303'
+    );
+
+    $response->redirect('http://example.example2/', 399);
+    is(
+      $response->status => 399,
+      'redirect override status code'
     );
   }
 
