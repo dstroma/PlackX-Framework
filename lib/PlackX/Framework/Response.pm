@@ -8,7 +8,8 @@ package PlackX::Framework::Response {
   use Plack::Util::Accessor qw(stash cleanup_callbacks template stream stream_writer);
   sub GlobalResponse ($class)           { ($class->app_namespace.'::Handler')->global_response }
   sub next                              { return;    }
-  sub stop                              { $_[0] || 1 }
+  sub stop                              { $_[0] || 1 } # To be deprecated
+  sub last                              { $_[0] || 1 }
   sub add_cleanup_callback($self, $sub) { push @{$self->{cleanup_callbacks}}, $sub }
   sub flash_cookie_name         ($self) { PlackX::Framework::flash_cookie_name($self->app_namespace)  }
   sub render_json         ($self, $dat) { $self->render_content('application/json', PXF::Util::encode_json($dat)) }
@@ -112,6 +113,38 @@ package PlackX::Framework::Response {
     $self->status(200);
     $self->content_type($content_type);
     $self->print($content);
+    return $self;
+  }
+
+  # render_file usage:
+  #   $response->render_file($filename_or_handle)
+  #   $response->render_file($content_type, $filename_or_handle)
+  sub render_file ($self, @slurp) {
+    my $file = pop   @slurp;
+    my $type = shift @slurp || undef;
+
+    $self->render_fh($self, $type, $file) if ref $file;
+
+    unless (defined $type) {
+      require Plack::MIME;
+      $type = Plack::MIME->mime_type($file) || undef;
+    }
+
+    require IO::File;
+    my $fh = IO::File->new($file, '<:raw')
+      or die "Cannot open $file! $!";
+
+    $self->render_fh($type, $fh);
+    return $self;
+  }
+
+  sub render_fh ($self, @slurp) {
+    my $fh   = pop   @slurp;
+    my $type = shift @slurp || undef;
+
+    $self->content_type($type) if defined $type;
+    $self->status(200);
+    $self->body($fh);
     return $self;
   }
 
@@ -258,6 +291,20 @@ An alias for $obj->render_$key(@values). For example, instead of calling
 render_html(...), you could call render(html => ...). Used by PXF's Router
 module to implement shortcuts to the appropriate $response->render_*() method.
 
+=item render_file($filename_or_handle)
+
+=item render_file($content_type, $filename_or_handle)
+
+Render a file by setting the body to a file handle, encouraging the PSGI server
+to use optimizations such as sendfile(). For filenames, will try to also guess
+the file type based on file extension.
+
+PXF will open the file of the given name or you can pass a handle that's already
+been opened.
+
+If the content_type cannot be determined and is not specified, it will default
+to the type previously set.
+
 =item render_html($string)
 
 Sets the content-type to text/html and sets the response body to $string.
@@ -327,6 +374,8 @@ useful in route actions. See also the equivalent inverse method, next().
 
     # In a filter
     return $response->stop; # equivalent to return $response;
+
+Aliased as last();
 
 =item template()
 
