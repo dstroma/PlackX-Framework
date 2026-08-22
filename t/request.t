@@ -100,7 +100,9 @@ package MyExample2::Request {
   ok($request->destination eq '/route-1', 'reroute resets destination');
   is($request->max_reroutes => 16, 'max_reroutes is 16');
 
-  *MyExample::Request::max_reroutes = sub { 10 };
+  { no warnings 'once';
+    *MyExample::Request::max_reroutes = sub { 10 };
+  }
   is($request->max_reroutes => 10, 'max_reroutes is adjustable to 10');
 
   # Raises error if excessive reroutes
