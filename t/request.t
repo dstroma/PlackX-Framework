@@ -112,7 +112,7 @@ package MyExample2::Request {
   for 11..12;
 
   ok(
-    ('/route-10' eq $request->env->{PATH_INFO} eq $request->env->{REQUEST_URI}),
+    ('/route-10' eq $request->env->{PATH_INFO} and '/route-10' eq $request->env->{REQUEST_URI}),
      'reroute alters psgi environment'
   );
 }
