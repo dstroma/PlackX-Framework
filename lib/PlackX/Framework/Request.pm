@@ -38,7 +38,7 @@ package PlackX::Framework::Request {
     push @{$self->{reroutes}}, $dest;
 
     croak "Excessive reroutes:\n" . join("\n", $self->{reroutes}->@*)
-      if $self->{reroutes}->@* > $self->max_reroutes;
+      if $self->{reroutes}->@* > $self->max_reroutes + 1;
 
     my $orig_path_info        = $self->path_info;
     $self->{"pxf.orig.$_"}  //= $self->env->{$_} for ('PATH_INFO', 'REQUEST_URI');
