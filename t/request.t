@@ -161,6 +161,37 @@ package MyExample2::Request {
     PlackX::Framework::Request::with_leadslash('/hello') => '/hello',
     'with_leadslash unchanged if already has slash'
   );
+
+  is(
+    PlackX::Framework::Request::no_trailslash('hello/') => 'hello',
+     'no_trailslash removestrailing slash'
+  );
+
+  is(
+    PlackX::Framework::Request::no_trailslash('hello') => 'hello',
+     'no_trailslash unchanged if no trailing slash'
+  );
+
+  my $request;
+  $request = MyExample::Request->new(sample_env());
+  is(
+    $request->abs_to('/some/page'), 'http://example.com/foo/some/page',
+    'abs_to() method'
+  );
+  is(
+    $request->rel_to('/some/page'), '/foo/some/page',
+     'rel_to() method'
+  );
+
+  $request = MyExample::Request->new(sample_env2());
+  is(
+    $request->abs_to('/some/page'), 'http://www.example.com/some/page',
+     'abs_to() method (env 2)'
+  );
+  is(
+    $request->rel_to('/some/page'), '/some/page',
+     'rel_to() method (env 2)'
+  );
 }
 
 
@@ -184,5 +215,35 @@ sub sample_env {
     'psgi.input'      => undef,
     'psgi.errors'     => undef,
     'psgi.url_scheme' => 'http',
+  };
+}
+
+sub sample_env2 {
+  return {
+    'psgi.multithread' => !!0,
+    'psgi.version' => [
+      1,
+      1
+    ],
+    'SERVER_PROTOCOL' => 'HTTP/1.1',
+    'psgi.multiprocess' => !!0,
+    #'psgi.input' => \*{'HTTP::Message::PSGI::$input'},
+    'SCRIPT_NAME' => '',
+    'REMOTE_ADDR' => '127.0.0.1',
+    'HTTP_HOST' => 'www.example.com',
+    'psgi.url_scheme' => 'http',
+    'REQUEST_URI' => '/hello/there',
+    'PATH_INFO' => '/hello/there',
+    'REMOTE_HOST' => 'localhost',
+    'psgi.run_once' => !!1,
+    #'psgi.errors' => *::STDERR,
+    'REMOTE_PORT' => 9735,
+    'CONTENT_LENGTH' => 0,
+    'psgi.nonblocking' => !!0,
+    'SERVER_NAME' => 'www.example.com',
+    'QUERY_STRING' => '',
+    'psgi.streaming' => !!1,
+    'SERVER_PORT' => 80,
+    'REQUEST_METHOD' => 'GET'
   };
 }

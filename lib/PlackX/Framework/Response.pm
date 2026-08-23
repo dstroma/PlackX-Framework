@@ -278,12 +278,13 @@ instead of 302 Found. This matches the more common type of redirect in a web
 app, which is directing the user to another page after a prevous request was
 processed (such as a log in form).
 
-Note URLs are passed along unaltered, you may want to prefix them in your app,
-for example with request->base:
+Note URLs are passed along verbatim, you might want to (should) use a helper
+from the PXF request object, specifically one of the abs_to() methods.
 
-    $response->redirect($request->base . '/' . $dest);
+    $response->redirect($request->route_abs_to('/'));
 
-See Plack::Response->redirect for more caveats.
+See L<Plack::Response#redirect> for more info about the redirect method.
+See L<PlackX::Framework::Request> for more URI utility methods.
 
 =item render($key => @values)
 
