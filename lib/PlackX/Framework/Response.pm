@@ -228,6 +228,9 @@ Sets the flash cookie to the value specified, or clears it if the value is
 false. PXF automatically clears the cookie on the subsequent request, unless
 you set a different one.
 
+If value is a hashref, the cookie will be automatically encoded to a JSON string
+with a special prefix to tell PlackX::Request to decode it.
+
 =item flash_redirect(value, url)
 
 Combines flash(value) and redirect(url) with a 303 (SEE OTHER) response code.

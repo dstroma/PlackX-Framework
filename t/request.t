@@ -221,10 +221,7 @@ sub sample_env {
 sub sample_env2 {
   return {
     'psgi.multithread' => !!0,
-    'psgi.version' => [
-      1,
-      1
-    ],
+    'psgi.version' => [ 1, 1 ],
     'SERVER_PROTOCOL' => 'HTTP/1.1',
     'psgi.multiprocess' => !!0,
     #'psgi.input' => \*{'HTTP::Message::PSGI::$input'},

@@ -165,12 +165,12 @@ error, most like of the "not an arrayref" variety.
 
 =over 4
 
-=item abs_to, rel_to
+=item abs_to(STR), rel_to(STR)
 
 Returns a URI with (abs_to) or without (rel_to) the http scheme, host, and
 (if necessary) the port, which are derived from the PSGI environment.
 
-=item app_rel_to, route_rel_to
+=item app_rel_to(STR), route_rel_to(STR)
 
 Returns a URI relative to the app or route, if an app_base or route base has
 been defined. For example, if your app has defined an app_base of '/app-base',
@@ -180,9 +180,20 @@ and your route has defined a base of '/route-base', these methods will return:
     route_rel_to('/') # /app-base/route-bsae
     rel_to('/')       # /
 
-=item app_abs_to, route_abs_to
+Internally, these methods rely on app_base() and route_base() methods described
+below.
 
-Like above, but with the HTTP scheme, host, and (if necessary) the port.
+=item app_abs_to(STR), route_abs_to(STR)
+
+Like app_rel_to() and route_rel_to(), but with the HTTP scheme, host, and
+(if necessary) the port.
+
+=item app_base(), route_base()
+
+Returns the PXF application's app_base (or uri_prefix) and the route's base() as
+set with the 'base' DSL keyword. These are set by PlackX::Framework::Handler,
+during request processing, and will be undef in a new object instantiated
+directly from PlackX::Framework::Request.
 
 =item param(NAME)
 
@@ -205,7 +216,7 @@ engine. For example:
     };
 
 At this time, route parameters do not get merged into the general parameters
-list, and cannot be obtaiend with the param() method (or the parent class
+list, and cannot be obtained with the param() method (or the parent class
 parameters() method), even if the route param name is unique.
 
 =item stash_param(NAME)
@@ -226,7 +237,9 @@ on the given key. For example:
 
 Gets the content of the PXF app's flash cookie, if set on the previous request.
 This feature is meant to help pass messages to users, and should not be used to
-store any information that might be subject to security concerns.
+store any information that might be subject to security concerns. If the flash
+was automatically encoded to a JSON string by PXF::Response, it is automatically
+decoded.
 
 =item flash_cookie_name()
 
