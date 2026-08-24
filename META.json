@@ -62,6 +62,8 @@
       },
       "test" : {
          "requires" : {
+            "HTTP::Server::PSGI" : "0",
+            "Plack::LWPish" : "0",
             "Test::More" : "0.98"
          }
       }
