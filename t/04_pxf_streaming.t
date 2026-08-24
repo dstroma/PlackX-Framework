@@ -146,7 +146,8 @@ sub run_client (%options) {
     PeerAddr => $options{host},
     PeerPort => $options{port},
     Proto    => 'tcp',
-  ) or die "Could not connect to server - $!";
+  ) or warn "Could not connect to server - $!";
+  return unless $socket;
 
   # Send HTTP request manually
   print $socket "GET $options{path} HTTP/1.0\r\n";
@@ -157,8 +158,6 @@ sub run_client (%options) {
   my @received_data = ();
   push @received_data, { line => $_, time => Time::HiRes::time() } while <$socket>;
 
-  # Close the connection
   close($socket);
-
   return @received_data;
 }
