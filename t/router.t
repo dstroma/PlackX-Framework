@@ -103,7 +103,9 @@ sub do_tests {
     return if !defined $filter;
     return $filter->() if ref $filter eq 'CODE';
     return $filter->{action}->() if ref $filter eq 'HASH';
-    die "Invalid filter";
+
+    diag "Invalid filter $filter";
+    return;
   }
 
   ok(

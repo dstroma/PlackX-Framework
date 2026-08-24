@@ -135,7 +135,7 @@ use Test::More;
         sub flash_cookie_name { 'flash-123456789-test' }
       }
       1;
-    } or die 'Could not create sublcass of PXFR: ' .$@;
+    } or BAIL_OUT 'Could not create sublcass of PXFR: ' .$@;
 
     my $response = PXF_Test_Response->new(200);
     $response->flash("A plain string!");
@@ -197,11 +197,15 @@ use Test::More;
         $/ = \16384;
         $body_data = <$body>;
       }
+
+      my $real_content;
       open my $fh, '<:raw', './t/tsupport/image.png'
-        or die "Cannot open file, $!";
-      local $/;
-      my $real_content = <$fh>;
-      close $fh;
+        or diag "Cannot open file, $!";
+      if ($fh) {
+        local $/;
+        $real_content = <$fh>;
+        close $fh;
+      }
       is(
         $body_data => $real_content,
         "File is read correctly: strings match"

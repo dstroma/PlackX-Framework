@@ -51,7 +51,7 @@ sub do_tests {
       };
     }
     1;
-  } or die "Problem setting up test: $@";
+  } or BAIL_OUT "Problem setting up test: $@";
 
   ok(My::Test::App2->can('app'),
     'app() class method generated'
