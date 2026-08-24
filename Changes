@@ -2,6 +2,8 @@ Revision history for Perl extension PlackX-Framework
 
 {{$NEXT}}
 
+0.34 2026-08-24T03:48:54Z
+
     - Add render_file feature
     - Improve testing of request/response
     - $response->last to eventually replace $response->stop
