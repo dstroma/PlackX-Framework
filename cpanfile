@@ -23,4 +23,5 @@ recommends 'URI::Fast';
 # For Testing
 on 'test' => sub {
     requires 'Test::More', '0.98';
+    requires 'LWP::UserAgent';
 };
