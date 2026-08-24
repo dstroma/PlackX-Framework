@@ -5,10 +5,10 @@ use experimental 'signatures';
 use Test::More;
 use Test::TCP;
 use HTTP::Server::PSGI;
-use LWP::UserAgent;
-
+use Plack::LWPish;
+use HTTP::Request;
 use PXF::Util ();
-use constant UA_TIMEOUT => 5;
+
 use constant BODY_LINES => 5;
 our $SLEEP_TIME  = 0.25;
 our $TCP_TEST_OK = 0;
@@ -69,9 +69,9 @@ sub do_tests {
         $server->run(sub { [200, [], ['OK']] }); #My::Test::App->app);
       },
       client => sub ($port, @slurp) {
-        my $ua = LWP::UserAgent->new;
-        $ua->timeout(UA_TIMEOUT);
-        my $res = $ua->get("http://127.0.0.1:$port/simple-test");
+        my $res = Plack::LWPish->new->request(
+          HTTP::Request->new(GET => "http://127.0.0.1:$port/simple-test")
+        );
         $TCP_TEST_OK = ($res->content eq 'OK');
       },
     );
