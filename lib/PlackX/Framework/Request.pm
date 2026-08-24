@@ -170,6 +170,9 @@ error, most like of the "not an arrayref" variety.
 Returns a URI with (abs_to) or without (rel_to) the http scheme, host, and
 (if necessary) the port, which are derived from the PSGI environment.
 
+If your application is behind a reverse proxy, you should probably define your
+own URI helper methods.
+
 =item app_rel_to(STR), route_rel_to(STR)
 
 Returns a URI relative to the app or route, if an app_base or route base has
@@ -195,16 +198,11 @@ set with the 'base' DSL keyword. These are set by PlackX::Framework::Handler,
 during request processing, and will be undef in a new object instantiated
 directly from PlackX::Framework::Request.
 
-=item param(NAME)
+=item param(NAME), cgi_param(NAME)
 
 Unlike Plack::Request, our param() method always returns a single scalar value.
 If you want the original behavior, which was modeled after CGI.pm, you can call
-cgi_param().
-
-=item cgi_param(NAME)
-
-Equivalent to Plack::Request's param(), which may return a scalar or list,
-depending on context, like CGI.pm or the mod_perl Apache request object.
+cgi_param(), which may return a list.
 
 =item route_param(NAME)
 
