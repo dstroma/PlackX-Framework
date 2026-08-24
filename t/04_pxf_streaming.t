@@ -61,7 +61,7 @@ sub do_tests {
 
   ##############################################################
   # If this very simple app fails we won't proceed with the test
-  {
+  eval {
     test_tcp(
       listen => 1,
       server => sub ($socket, @slurp) {
@@ -75,7 +75,8 @@ sub do_tests {
         $TCP_TEST_OK = ($res->content eq 'OK');
       },
     );
-  }
+    1;
+  } or warn $@;
   ##############################################################
 
   SKIP: {
